@@ -1,0 +1,63 @@
+{
+  "name": "@mcptoolshop/bytefit",
+  "version": "0.0.0",
+  "description": "Hardware-aware local-LLM loadout planner: chooses model class, quant, KV-cache, context, and offload policy for your VRAM/RAM, and refuses configs that would silently page to disk.",
+  "type": "module",
+  "bin": {
+    "bytefit": "./dist/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "verify": "tsc --noEmit && node --test dist/tests/*.test.js",
+    "test": "node --test dist/tests/*.test.js",
+    "test:coverage": "c8 --reporter=lcov --reporter=text node --test dist/tests/*.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "SPEC.md",
+    "LICENSE",
+    "SECURITY.md"
+  ],
+  "keywords": [
+    "llm",
+    "local-llm",
+    "inference",
+    "quantization",
+    "gguf",
+    "vram",
+    "ollama",
+    "llama.cpp",
+    "moe",
+    "offload",
+    "mcp"
+  ],
+  "author": "mcp-tool-shop",
+  "license": "MIT",
+  "homepage": "https://mcp-tool-shop-org.github.io/bytefit/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mcp-tool-shop-org/bytefit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mcp-tool-shop-org/bytefit/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "c8": "^11.0.0",
+    "typescript": "^6.0.2"
+  }
+}
