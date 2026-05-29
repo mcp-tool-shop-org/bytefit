@@ -81,6 +81,22 @@ test("bad magic throws GgufError; truncated buffer throws GgufTruncatedError", (
   assert.throws(() => parseGguf(buf.subarray(0, 28)), GgufTruncatedError);
 });
 
+test("computeParams: exact total + MoE activated params from tensor info", () => {
+  const entries: GgufKV[] = [
+    { key: "general.architecture", type: GgufValueType.STRING, value: "qwen3" },
+    { key: "qwen3.expert_count", type: GgufValueType.UINT32, value: 128 },
+    { key: "qwen3.expert_used_count", type: GgufValueType.UINT32, value: 8 },
+  ];
+  const tensors = [
+    { name: "token_embd.weight", dims: [100, 100] }, // 10,000 always-on
+    { name: "blk.0.ffn_down_exps.weight", dims: [100, 100, 128] }, // 1,280,000 (all 128 experts)
+  ];
+  const info = ggufToModelInfo(parseGguf(buildGguf(entries, { tensors })));
+  assert.equal(info.totalParams, 10_000 + 1_280_000);
+  assert.equal(info.activatedParams, 10_000 + 1_280_000 * (8 / 128)); // 90,000
+  assert.equal(info.isMoE, true);
+});
+
 test("readGgufMetadata reads metadata from a real file", async () => {
   const path = join(tmpdir(), `bytefit-test-${process.pid}.gguf`);
   await writeFile(path, buildGguf(moe));

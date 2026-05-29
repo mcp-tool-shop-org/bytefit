@@ -18,11 +18,18 @@ export enum GgufValueType {
 
 export type GgufValue = number | boolean | string | GgufValue[];
 
+export interface GgufTensorInfo {
+  name: string;
+  dims: number[];
+  type: number;
+}
+
 export interface GgufHeader {
   version: number;
   tensorCount: number;
   kvCount: number;
   metadata: Map<string, GgufValue>;
+  tensors: GgufTensorInfo[];
 }
 
 /** "GGUF" as a little-endian uint32. */

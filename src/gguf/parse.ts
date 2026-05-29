@@ -1,4 +1,4 @@
-import { GgufValueType, GGUF_MAGIC, type GgufValue, type GgufHeader } from "./types.js";
+import { GgufValueType, GGUF_MAGIC, type GgufValue, type GgufHeader, type GgufTensorInfo } from "./types.js";
 
 export class GgufError extends Error {}
 /** Thrown when the buffer ends mid-parse — the file reader grows its read window and retries. */
@@ -83,5 +83,15 @@ export function parseGguf(bytes: Buffer): GgufHeader {
     const valueType = r.u32();
     metadata.set(key, readValue(r, valueType));
   }
-  return { version, tensorCount, kvCount, metadata };
+  const tensors: GgufTensorInfo[] = [];
+  for (let i = 0; i < tensorCount; i++) {
+    const name = r.str();
+    const nDims = r.u32();
+    const dims: number[] = [];
+    for (let d = 0; d < nDims; d++) dims.push(r.u64());
+    const type = r.u32();
+    r.u64(); // tensor data offset — unused for metadata / param counting
+    tensors.push({ name, dims, type });
+  }
+  return { version, tensorCount, kvCount, metadata, tensors };
 }

@@ -22,12 +22,16 @@ All notable changes to this project are documented here. Format follows
   with a 0.90 free-VRAM backoff + a GPU-name -> bandwidth table; platform-correct usable free RAM
   (Linux MemAvailable, macOS free+inactive, Windows ullAvailPhys); RAM bandwidth from DDR MT/s x
   channels; optional measured NVMe read. Validated live on an RTX 5090. 7 tests.
+- Model catalog (zero-dep): Ollama enumeration (/api/tags + raw blob-GGUF parse for exact params
+  and expert counts; /api/show fallback) + local-dir .gguf scan + a shared GGUF -> ModelMeta builder.
+  Extended the GGUF reader to parse tensor-info -> exact total + MoE activated params. 5 tests;
+  validated live (9 Ollama models ranked on an RTX 5090, incl. a 36B MoE detected at 4.0B active).
 
 ### Changed
 - Core VRAM headroom default 512 MiB -> 1536 MiB (grounded in the oobabooga GGUF-VRAM-formula
   intercept ~1517 MiB), plus a 0.90 free-VRAM backoff applied by the probe. (Per the io-shell swarm.)
 
 ### Notes
-- Pre-release (v0.0.0). Pure core + GGUF reader + hardware probe landed; the catalog and
-  runtime-arg emitter (the rest of the I/O shell) and the CLI land next.
+- Pre-release (v0.0.0). Pure core + GGUF reader + probe + catalog landed; the runtime-arg
+  emitter (the last I/O-shell module) and the CLI land next.
 - Disk-backed MoE expert streaming is scoped as experimental R&D, not a shipping feature.

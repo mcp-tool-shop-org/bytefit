@@ -1,5 +1,6 @@
-import type { GgufHeader, GgufValue } from "./types.js";
+import type { GgufHeader, GgufValue, GgufTensorInfo } from "./types.js";
 import type { QuantType } from "../types.js";
+import { computeParams } from "./params.js";
 
 /** `general.file_type` enum -> our QuantType, for the values bytefit models. */
 const FILE_TYPE_TO_QUANT: Record<number, QuantType> = {
@@ -30,6 +31,7 @@ export interface GgufModelInfo {
   activeExperts?: number;
   quant?: QuantType;
   totalParams?: number;
+  activatedParams?: number;
   sizeLabel?: string;
 }
 
@@ -53,12 +55,11 @@ export function parseSizeLabel(label: string | undefined): number | undefined {
 }
 
 /**
- * Project GGUF metadata onto the fields bytefit's core needs. Architecture-prefixed keys are
- * resolved off `general.architecture`. headDim falls back to embedding_length/head_count;
- * totalParams falls back from general.parameter_count to the size_label heuristic.
+ * Project GGUF metadata (+ optional tensor info) onto the fields bytefit's core needs.
+ * Exact param counts come from tensor info when present; otherwise we fall back to
+ * general.parameter_count, then the size_label heuristic.
  */
-export function ggufToModelInfo(header: GgufHeader): GgufModelInfo {
-  const md = header.metadata;
+export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: GgufTensorInfo[] = []): GgufModelInfo {
   const arch = asString(md.get("general.architecture"));
   const g = (suffix: string): GgufValue | undefined => (arch ? md.get(`${arch}.${suffix}`) : undefined);
 
@@ -74,7 +75,10 @@ export function ggufToModelInfo(header: GgufHeader): GgufModelInfo {
   const quant = fileType !== undefined ? FILE_TYPE_TO_QUANT[fileType] : undefined;
 
   const sizeLabel = asString(md.get("general.size_label"));
-  const totalParams = asNumber(md.get("general.parameter_count")) ?? parseSizeLabel(sizeLabel);
+  const counts = computeParams(md, tensors);
+  const totalParams =
+    counts.totalParams > 0 ? counts.totalParams : asNumber(md.get("general.parameter_count")) ?? parseSizeLabel(sizeLabel);
+  const activatedParams = counts.totalParams > 0 ? counts.activatedParams : undefined;
 
   return {
     architecture: arch,
@@ -89,6 +93,11 @@ export function ggufToModelInfo(header: GgufHeader): GgufModelInfo {
     activeExperts: asNumber(g("expert_used_count")),
     quant,
     totalParams,
+    activatedParams,
     sizeLabel,
   };
+}
+
+export function ggufToModelInfo(header: GgufHeader): GgufModelInfo {
+  return ggufModelInfoFromMetadata(header.metadata, header.tensors);
 }

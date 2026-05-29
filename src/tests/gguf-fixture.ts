@@ -9,6 +9,12 @@ export type GgufKV =
   | { key: string; type: GgufValueType.BOOL; value: boolean }
   | { key: string; type: GgufValueType.ARRAY; subtype: GgufValueType.STRING; value: string[] };
 
+export interface GgufTensorSpec {
+  name: string;
+  dims: number[];
+  type?: number;
+}
+
 function u32(n: number): Buffer {
   const b = Buffer.alloc(4);
   b.writeUInt32LE(n >>> 0, 0);
@@ -46,16 +52,17 @@ function encodeValue(kv: GgufKV): Buffer {
   }
 }
 
-/** Encode a valid GGUF buffer (header + KV section) for round-trip testing. */
-export function buildGguf(entries: GgufKV[], opts: { version?: number; tensorCount?: number } = {}): Buffer {
-  const parts: Buffer[] = [
-    u32(GGUF_MAGIC),
-    u32(opts.version ?? 3),
-    u64(opts.tensorCount ?? 0),
-    u64(entries.length),
-  ];
+/** Encode a valid GGUF buffer (header + KV section + optional tensor-info) for round-trip testing. */
+export function buildGguf(entries: GgufKV[], opts: { version?: number; tensors?: GgufTensorSpec[] } = {}): Buffer {
+  const tensors = opts.tensors ?? [];
+  const parts: Buffer[] = [u32(GGUF_MAGIC), u32(opts.version ?? 3), u64(tensors.length), u64(entries.length)];
   for (const e of entries) {
     parts.push(gstr(e.key), u32(e.type), encodeValue(e));
+  }
+  for (const t of tensors) {
+    parts.push(gstr(t.name), u32(t.dims.length));
+    for (const d of t.dims) parts.push(u64(d));
+    parts.push(u32(t.type ?? 0), u64(0)); // type + data offset
   }
   return Buffer.concat(parts);
 }
