@@ -23,5 +23,6 @@ export type { PlacementResult, PlacementOptions } from "./placement.js";
 export { plan, recommend } from "./plan.js";
 export type { Recommendation } from "./plan.js";
 
-// I/O shell — GGUF reader (first module)
+// I/O shell — GGUF reader + hardware probe
 export * from "./gguf/index.js";
+export * from "./probe/index.js";
