@@ -57,7 +57,12 @@ export const KV_BYTES_PER_ELEM: Record<KVCacheType, number> = {
 export const REASONING_QUANT_FLOOR: QuantType = "Q4_K_M";
 
 export const DEFAULT_CONTEXT_LENGTH = 8192;
-export const DEFAULT_VRAM_HEADROOM_BYTES = 512 * MiB;
+/**
+ * Fixed VRAM overhead beyond weights + KV: CUDA/HIP context (~0.55 GiB) + compute buffers
+ * (~0.5 GiB) + graph allocation. ~1.5 GiB matches the oobabooga GGUF-VRAM-formula intercept
+ * (~1517 MiB). The probe additionally applies a 0.90 backoff on reported free VRAM.
+ */
+export const DEFAULT_VRAM_HEADROOM_BYTES = 1536 * MiB;
 export const DEFAULT_RAM_HEADROOM_BYTES = 2 * GiB;
 
 /** Below this, an interactive loadout is flagged as sluggish (informational only). */
