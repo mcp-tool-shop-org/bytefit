@@ -22,3 +22,6 @@ export { placeAndAdmit } from "./placement.js";
 export type { PlacementResult, PlacementOptions } from "./placement.js";
 export { plan, recommend } from "./plan.js";
 export type { Recommendation } from "./plan.js";
+
+// I/O shell — GGUF reader (first module)
+export * from "./gguf/index.js";
