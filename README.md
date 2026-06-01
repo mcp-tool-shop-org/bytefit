@@ -1,4 +1,4 @@
-# bytefit
+#
 
 **Hardware-aware local-LLM loadout planner.**
 
