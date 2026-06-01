@@ -1,0 +1,79 @@
+[
+  {
+    "model": "mistral-small:24b",
+    "eval_count": 256,
+    "eval_rate_tps": 94.12,
+    "prompt_eval_count": 190,
+    "prompt_eval_rate_tps": 3387.26,
+    "load_ms": 21360.0,
+    "total_ms": 24279.0,
+    "ps": "NAME                 ID              SIZE     PROCESSOR    CONTEXT    UNTIL               || mistral-small:24b    8039dd90c113    21 GB    100% GPU     32768      4 minutes from now    ",
+    "show": "  Model ;     architecture        llama      ;     parameters          23.6B      ;     context length      32768      ;     embedding length    5120       ;     quantization        Q4_K_M     ;  ;   Capabilities ;     completion     ;     tools          ;  ;   Parameters ;     temperature    0.15     ;  ;   System ;     You are Mistral Small 3, a Large Language Model (LLM) created by Mistral AI, a French startup            ;       headquartered in Paris. Your knowledge base was last updated on 2023-10-01. When you're not sure         ;       about some information, you say that you don't have the information and don't make up anything.          ;       If the user's question is not clear, ambiguous, or does not provide enough context for you to            ;       accurately answer the question, you do not try to answer it right away and you rather ask the user       ;       to clarify their request (e.g. \"What are some good restaurants around me?\" => \"Where are you?\" or        ;       \"When is the next flight to Tokyo\" => \"Where do you travel from?\")                                       ;  ;   License ;     Apache License                ;     Version 2.0, January 2004     ;     ...                           ; "
+  },
+  {
+    "model": "devstral-small-2:24b",
+    "eval_count": 256,
+    "eval_rate_tps": 91.33,
+    "prompt_eval_count": 584,
+    "prompt_eval_rate_tps": 1545.5,
+    "load_ms": 31453.0,
+    "total_ms": 34745.0,
+    "ps": "NAME                    ID              SIZE     PROCESSOR    CONTEXT    UNTIL               || devstral-small-2:24b    24277f07f62d    21 GB    100% GPU     32768      4 minutes from now    ",
+    "show": "  Model ;     architecture        mistral3     ;     parameters          24.0B        ;     context length      393216       ;     embedding length    5120         ;     quantization        Q4_K_M       ;  ;   Capabilities ;     completion     ;     vision         ;     tools          ;  ;   Parameters ;     temperature    0.15     ; "
+  },
+  {
+    "model": "granite4.1:30b",
+    "eval_count": 256,
+    "eval_rate_tps": 47.62,
+    "prompt_eval_count": 37,
+    "prompt_eval_rate_tps": 748.57,
+    "load_ms": 25605.0,
+    "total_ms": 31072.0,
+    "ps": "NAME              ID              SIZE     PROCESSOR         CONTEXT    UNTIL               || granite4.1:30b    3f3e5df8a021    31 GB    1%/99% CPU/GPU    32768      4 minutes from now    ",
+    "show": "  Model ;     architecture        granite     ;     parameters          28.9B       ;     context length      131072      ;     embedding length    4096        ;     quantization        Q4_K_M      ;  ;   Capabilities ;     completion     ;     tools          ;  ;   License ;     Apache License                ;     Version 2.0, January 2004     ;     ...                           ; "
+  },
+  {
+    "model": "qwen3.6:27b",
+    "eval_count": 256,
+    "eval_rate_tps": 58.21,
+    "prompt_eval_count": 41,
+    "prompt_eval_rate_tps": 207.27,
+    "load_ms": 29888.0,
+    "total_ms": 34663.0,
+    "ps": "NAME           ID              SIZE     PROCESSOR    CONTEXT    UNTIL               || qwen3.6:27b    a50eda8ed977    24 GB    100% GPU     32768      4 minutes from now    ",
+    "show": "  Model ;     architecture        qwen35     ;     parameters          27.8B      ;     context length      262144     ;     embedding length    5120       ;     quantization        Q4_K_M     ;  ;   Capabilities ;     completion     ;     vision         ;     tools          ;     thinking       ;  ;   Parameters ;     min_p               0        ;     presence_penalty    1.5      ;     repeat_penalty      1        ;     temperature         1        ;     top_k               20       ;     top_p               0.95     ;  ;   License ;     Apache License                ;     Version 2.0, January 2004     ;     ...                           ; "
+  },
+  {
+    "model": "gemma4:31b",
+    "eval_count": 256,
+    "eval_rate_tps": 62.04,
+    "prompt_eval_count": 41,
+    "prompt_eval_rate_tps": 186.38,
+    "load_ms": 32986.0,
+    "total_ms": 37637.0,
+    "ps": "NAME          ID              SIZE     PROCESSOR    CONTEXT    UNTIL               || gemma4:31b    6316f0629137    27 GB    100% GPU     32768      4 minutes from now    ",
+    "show": "  Model ;     architecture        gemma4     ;     parameters          31.3B      ;     context length      262144     ;     embedding length    5376       ;     quantization        Q4_K_M     ;     requires            0.20.0     ;  ;   Capabilities ;     completion     ;     vision         ;     tools          ;     thinking       ;  ;   Parameters ;     top_p          0.95     ;     temperature    1        ;     top_k          64       ;  ;   License ;     Apache License                ;     Version 2.0, January 2004     ;     ...                           ; "
+  },
+  {
+    "model": "aya-expanse:32b",
+    "eval_count": 256,
+    "eval_rate_tps": 72.67,
+    "prompt_eval_count": 90,
+    "prompt_eval_rate_tps": 2189.35,
+    "load_ms": 29733.0,
+    "total_ms": 33605.0,
+    "ps": "NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL               || aya-expanse:32b    1603440383bd    22 GB    100% GPU     8192       4 minutes from now    ",
+    "show": "  Model ;     architecture        command-r     ;     parameters          32.3B         ;     context length      8192          ;     embedding length    8192          ;     quantization        Q4_K_M        ;  ;   Capabilities ;     completion     ;     tools          ;  ;   Parameters ;     stop    \"<|START_OF_TURN_TOKEN|>\"     ;     stop    \"<|END_OF_TURN_TOKEN|>\"       ;  ;   System ;     You are Aya, a brilliant, sophisticated, multilingual AI-assistant trained to assist human users by      ;       providing thorough responses. You are able to interact and respond to questions in 23 languages and      ;       you are powered by a multilingual model built by Cohere For AI.                                          ;  ;   License ;     Creative Commons Attribution-NonCommercial 4.0 International Public     ;     License with Acceptable Use Addendum                                    ;     ...                                                                     ; "
+  },
+  {
+    "model": "qwen3.6:35b-a3b",
+    "eval_count": 256,
+    "eval_rate_tps": 136.12,
+    "prompt_eval_count": 41,
+    "prompt_eval_rate_tps": 155.84,
+    "load_ms": 38973.0,
+    "total_ms": 41308.0,
+    "ps": "NAME               ID              SIZE     PROCESSOR    CONTEXT    UNTIL               || qwen3.6:35b-a3b    07d35212591f    27 GB    100% GPU     32768      4 minutes from now    ",
+    "show": "  Model ;     architecture        qwen35moe     ;     parameters          36.0B         ;     context length      262144        ;     embedding length    2048          ;     quantization        Q4_K_M        ;  ;   Capabilities ;     completion     ;     vision         ;     tools          ;     thinking       ;  ;   Parameters ;     min_p               0        ;     presence_penalty    1.5      ;     repeat_penalty      1        ;     temperature         1        ;     top_k               20       ;     top_p               0.95     ;  ;   License ;     Apache License                ;     Version 2.0, January 2004     ;     ...                           ; "
+  }
+]
