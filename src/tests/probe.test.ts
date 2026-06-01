@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseNvidiaSmiCsv,
+  pickPrimaryGpu,
   parseMemInfo,
   parseVmStat,
   parseWin32Memory,
@@ -52,4 +53,21 @@ test("parseWin32Memory takes the effective MT/s and counts DIMMs", () => {
   assert.equal(r.mtPerSec, 4800);
   assert.equal(r.dimmCount, 2);
   assert.equal(r.dataWidthBits, 64);
+});
+
+test("parseNvidiaSmiCsv parses multiple GPUs", () => {
+  const rows = parseNvidiaSmiCsv("NVIDIA GeForce RTX 4060, 8192, 8000\nNVIDIA GeForce RTX 5090, 32607, 29000\n");
+  assert.equal(rows.length, 2);
+});
+
+test("pickPrimaryGpu picks the largest-VRAM GPU, not whichever is listed first", () => {
+  const rows = parseNvidiaSmiCsv("NVIDIA GeForce RTX 4060, 8192, 8000\nNVIDIA GeForce RTX 5090, 32607, 29000\n");
+  assert.equal(pickPrimaryGpu(rows)?.name, "NVIDIA GeForce RTX 5090");
+});
+
+test("parseNvidiaSmiCsv / pickPrimaryGpu degrade gracefully on empty or garbage output", () => {
+  assert.equal(parseNvidiaSmiCsv("").length, 0);
+  assert.equal(parseNvidiaSmiCsv("\n\n   \n").length, 0);
+  assert.equal(parseNvidiaSmiCsv("garbage without commas").length, 0);
+  assert.equal(pickPrimaryGpu(parseNvidiaSmiCsv("")), undefined);
 });

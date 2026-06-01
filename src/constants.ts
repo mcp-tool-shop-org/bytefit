@@ -86,6 +86,13 @@ export const RAM_USABLE_FRACTION = 0.75;
  */
 export const BANDWIDTH_EFFICIENCY = 0.7;
 
+/**
+ * Random small-block reads (the MoE expert-streaming pattern) run ~3–6× below sequential NVMe
+ * (SPEC §3.1); the disk-tier benchmark divides its sequential measurement by this to model effective
+ * random access rather than over-promising the disk tier.
+ */
+export const NVME_RANDOM_ACCESS_DISCOUNT = 4;
+
 /** Below this, an interactive loadout is flagged as sluggish (informational only). */
 export const INTERACTIVE_MIN_TOK_PER_SEC = 5;
 
