@@ -42,7 +42,12 @@ export interface GgufModelInfo {
 }
 
 function asNumber(v: GgufValue | undefined): number | undefined {
-  return typeof v === "number" ? v : undefined;
+  if (typeof v === "number") return v;
+  // Ollama /api/show can serialize a large integer (e.g. parameter_count) as a STRING; accept a finite
+  // numeric string rather than silently dropping it to the size-label heuristic. (Precision >2^53 is
+  // not representable, but real arch dims / param counts are well under that.)
+  if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) return Number(v);
+  return undefined;
 }
 function asString(v: GgufValue | undefined): string | undefined {
   return typeof v === "string" ? v : undefined;
