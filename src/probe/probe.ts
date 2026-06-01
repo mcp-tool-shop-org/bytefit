@@ -18,8 +18,9 @@ import {
 
 const execFile = promisify(execFileCb);
 
-/** Ollama-style backoff on reported free VRAM (driver fragmentation / reserved). */
-const VRAM_USABLE_FACTOR = 0.9;
+// Probe reports HONEST free VRAM (raw nvidia-smi / sysfs). The usable-memory backoff — a fixed
+// headroom floor plus a fraction-of-total cap — lives in one place, `usableBytes` (footprint.ts),
+// so the planner can't double-count it (was: a 0.90 here + a 1.5 GiB subtraction downstream).
 
 /** Run a system binary with fixed args (no shell). Returns stdout, or undefined if it fails/absent. */
 async function run(cmd: string, args: string[]): Promise<string | undefined> {
@@ -42,7 +43,7 @@ export async function probeGpu(): Promise<GpuInfo> {
         vendor: "nvidia",
         name: g.name,
         vramTotalBytes: g.vramTotalBytes,
-        vramFreeBytes: Math.floor(g.vramFreeBytes * VRAM_USABLE_FACTOR),
+        vramFreeBytes: g.vramFreeBytes,
         bandwidthBytesPerSec: bw.bytesPerSec,
         bandwidthConfidence: bw.confidence,
       };
@@ -59,7 +60,7 @@ export async function probeGpu(): Promise<GpuInfo> {
       vendor: "apple",
       name: brand,
       vramTotalBytes: vram,
-      vramFreeBytes: Math.floor(Math.min(vram, freemem()) * VRAM_USABLE_FACTOR),
+      vramFreeBytes: Math.min(vram, freemem()),
       bandwidthBytesPerSec: bw.bytesPerSec,
       bandwidthConfidence: bw.confidence,
     };
@@ -79,7 +80,7 @@ export async function probeGpu(): Promise<GpuInfo> {
         vendor: "amd",
         name: "AMD GPU (sysfs)",
         vramTotalBytes: total,
-        vramFreeBytes: Math.floor(free * VRAM_USABLE_FACTOR),
+        vramFreeBytes: Math.max(0, free),
         bandwidthBytesPerSec: 360 * 1_000_000_000,
         bandwidthConfidence: "unknown",
       };

@@ -94,9 +94,10 @@ export interface PlanOptions {
   experimentalDisk?: boolean;
   /** Force a KV cache type instead of letting bytefit choose. Default q8_0. */
   kvCacheType?: KVCacheType;
-  /** VRAM safety margin in bytes (activations/buffers). Default 512 MiB. */
+  /** Fixed VRAM headroom floor in bytes (CUDA context / compute buffers). Default 1536 MiB; combined
+   * with the VRAM_USABLE_FRACTION cap via usableBytes. */
   vramHeadroomBytes?: number;
-  /** RAM safety margin in bytes (OS/other apps). Default 2 GiB. */
+  /** Fixed RAM headroom floor in bytes (OS / other apps). Default 2 GiB; combined with RAM_USABLE_FRACTION. */
   ramHeadroomBytes?: number;
 }
 

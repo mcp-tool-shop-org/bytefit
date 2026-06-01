@@ -6,8 +6,8 @@ import type {
   Verdict,
   Refusal,
 } from "./types.js";
-import { fmtGiB } from "./constants.js";
-import { buildWeightBytes, activeWeightBytesPerToken } from "./footprint.js";
+import { fmtGiB, VRAM_USABLE_FRACTION, RAM_USABLE_FRACTION } from "./constants.js";
+import { buildWeightBytes, activeWeightBytesPerToken, usableBytes } from "./footprint.js";
 
 export interface PlacementResult {
   placement?: Placement;
@@ -42,8 +42,8 @@ export function placeAndAdmit(
 ): PlacementResult {
   const weightTotal = buildWeightBytes(model, build);
   const activePerTok = activeWeightBytesPerToken(model, build);
-  const usableVram = Math.max(0, hardware.vramFreeBytes - opts.vramHeadroomBytes);
-  const usableRam = Math.max(0, hardware.ramFreeBytes - opts.ramHeadroomBytes);
+  const usableVram = usableBytes(hardware.vramFreeBytes, hardware.vramBytes, opts.vramHeadroomBytes, VRAM_USABLE_FRACTION);
+  const usableRam = usableBytes(hardware.ramFreeBytes, hardware.ramBytes, opts.ramHeadroomBytes, RAM_USABLE_FRACTION);
 
   const activeOn = (weightBytes: number): number =>
     weightTotal > 0 ? activePerTok * (weightBytes / weightTotal) : 0;
@@ -129,13 +129,13 @@ export function placeAndAdmit(
   if (model.isMoE) {
     return refuse({
       code: "WONT_FIT_MOE",
-      message: `Weights (${fmtGiB(weightTotal)}) exceed usable VRAM+RAM (${fmtGiB(combined)}). This needs server-class RAM.`,
+      message: `Weights (${fmtGiB(weightTotal)}) exceed usable VRAM+RAM (${fmtGiB(combined)}). This needs server-class RAM; refusing rather than page (involuntary paging collapses throughput ~78×, arXiv:2512.24637).`,
       hint: "Use a smaller quant or model, add RAM, or pass experimentalDisk to stream experts from NVMe (slow, MoE-only).",
     });
   }
   return refuse({
     code: "WONT_FIT_DENSE",
-    message: `Weights (${fmtGiB(weightTotal)}) exceed usable VRAM+RAM (${fmtGiB(combined)}); a dense model cannot stream from disk usably.`,
+    message: `Weights (${fmtGiB(weightTotal)}) exceed usable VRAM+RAM (${fmtGiB(combined)}); a dense model cannot stream from disk usably. Refusing rather than page (involuntary paging collapses throughput ~78×, arXiv:2512.24637).`,
     hint: "Use a smaller quant or a smaller model, or add RAM.",
   });
 }

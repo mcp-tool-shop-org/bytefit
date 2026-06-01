@@ -58,12 +58,22 @@ export const REASONING_QUANT_FLOOR: QuantType = "Q4_K_M";
 
 export const DEFAULT_CONTEXT_LENGTH = 8192;
 /**
- * Fixed VRAM overhead beyond weights + KV: CUDA/HIP context (~0.55 GiB) + compute buffers
- * (~0.5 GiB) + graph allocation. ~1.5 GiB matches the oobabooga GGUF-VRAM-formula intercept
- * (~1517 MiB). The probe additionally applies a 0.90 backoff on reported free VRAM.
+ * Fixed memory headroom beyond weights + KV, used as the *fixed floor* in `usableBytes`. VRAM:
+ * CUDA/HIP context (~0.55 GiB) + compute buffers + graph allocation (~1.5 GiB ≈ the oobabooga
+ * GGUF-VRAM-formula intercept, ~1517 MiB). RAM: OS + other apps. Combined with the fraction caps
+ * below via min(free − fixed, total × fraction) — a single model, never a stacked/double backoff.
  */
 export const DEFAULT_VRAM_HEADROOM_BYTES = 1536 * MiB;
 export const DEFAULT_RAM_HEADROOM_BYTES = 2 * GiB;
+
+/**
+ * Never use more than this fraction of TOTAL memory, regardless of reported free. VRAM 0.90 is the
+ * fragmentation / CUDA-graph / desktop guardband (≈ vLLM's 10% reserve); RAM 0.75 keeps ≥25% for the
+ * OS page cache so mmap'd weights don't thrash (research-grounding #23). Applied as the cap in
+ * `usableBytes`. Involuntary paging past these collapses decode throughput ~78× (arXiv:2512.24637).
+ */
+export const VRAM_USABLE_FRACTION = 0.9;
+export const RAM_USABLE_FRACTION = 0.75;
 
 /**
  * Effective fraction of rated memory bandwidth realized during single-stream (batch=1) decode.

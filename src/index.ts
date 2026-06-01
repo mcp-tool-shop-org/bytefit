@@ -11,13 +11,15 @@ export {
   DEFAULT_CONTEXT_LENGTH,
   DEFAULT_VRAM_HEADROOM_BYTES,
   DEFAULT_RAM_HEADROOM_BYTES,
+  VRAM_USABLE_FRACTION,
+  RAM_USABLE_FRACTION,
   BANDWIDTH_EFFICIENCY,
   INTERACTIVE_MIN_TOK_PER_SEC,
   fmtGiB,
 } from "./constants.js";
 export { bytesPerParam, quantQualityRank, buildWeightBytes, selectQuant, smallestQuant, isImatrixQuant, lowBitRisk } from "./quant.js";
 export type { QuantChoice } from "./quant.js";
-export { kvBytesPerToken, kvBytesTotal, activeWeightBytesPerToken } from "./footprint.js";
+export { kvBytesPerToken, kvBytesTotal, activeWeightBytesPerToken, usableBytes } from "./footprint.js";
 export { predictTokensPerSec } from "./roofline.js";
 export { placeAndAdmit } from "./placement.js";
 export type { PlacementResult, PlacementOptions } from "./placement.js";

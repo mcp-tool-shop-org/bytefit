@@ -12,6 +12,8 @@ import {
   DEFAULT_CONTEXT_LENGTH,
   DEFAULT_VRAM_HEADROOM_BYTES,
   DEFAULT_RAM_HEADROOM_BYTES,
+  VRAM_USABLE_FRACTION,
+  RAM_USABLE_FRACTION,
   INTERACTIVE_MIN_TOK_PER_SEC,
   fmtGiB,
 } from "./constants.js";
@@ -20,6 +22,7 @@ import {
   kvBytesPerToken,
   kvBytesTotal as computeKvTotal,
   activeWeightBytesPerToken,
+  usableBytes,
 } from "./footprint.js";
 import { placeAndAdmit } from "./placement.js";
 import { predictTokensPerSec } from "./roofline.js";
@@ -40,8 +43,8 @@ export function plan(req: PlanRequest): Loadout {
   const experimentalDisk = opts.experimentalDisk ?? false;
 
   const reasoning: string[] = [];
-  const usableVram = Math.max(0, hardware.vramFreeBytes - vramHeadroomBytes);
-  const usableRam = Math.max(0, hardware.ramFreeBytes - ramHeadroomBytes);
+  const usableVram = usableBytes(hardware.vramFreeBytes, hardware.vramBytes, vramHeadroomBytes, VRAM_USABLE_FRACTION);
+  const usableRam = usableBytes(hardware.ramFreeBytes, hardware.ramBytes, ramHeadroomBytes, RAM_USABLE_FRACTION);
   const kvTotal = computeKvTotal(model, kvCacheType, contextLength);
 
   reasoning.push(

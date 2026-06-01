@@ -22,4 +22,18 @@ export function activeWeightBytesPerToken(model: ModelMeta, build: QuantBuild): 
   return bytesPerParam(build.quant) * activated;
 }
 
+/**
+ * Usable memory on a tier: honest free minus a fixed headroom (CUDA context / compute buffers / OS),
+ * but never more than `usableFraction` of total (fragmentation / page-cache guardband). The min folds
+ * the fixed-floor and percentage models into one — no stacked backoff, which silently over-refuses.
+ */
+export function usableBytes(
+  freeBytes: number,
+  totalBytes: number,
+  fixedHeadroomBytes: number,
+  usableFraction: number,
+): number {
+  return Math.max(0, Math.min(freeBytes - fixedHeadroomBytes, totalBytes * usableFraction));
+}
+
 export { buildWeightBytes };
