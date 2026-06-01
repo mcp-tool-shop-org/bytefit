@@ -60,65 +60,75 @@ function baseUrl(opts: OllamaCatalogOptions): string {
   return /^https?:\/\//.test(h) ? h : `http://${h}`;
 }
 
-async function ollamaFetch(url: string, body?: unknown): Promise<unknown | undefined> {
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 8000);
-    const res = await fetch(url, {
-      method: body ? "POST" : "GET",
-      ...(body ? { headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {}),
-      signal: ctrl.signal,
-    });
-    clearTimeout(timer);
-    return res.ok ? await res.json() : undefined;
-  } catch {
-    return undefined;
+async function ollamaFetch(url: string, body?: unknown, retries = 0): Promise<unknown | undefined> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      const res = await fetch(url, {
+        method: body ? "POST" : "GET",
+        ...(body ? { headers: { "content-type": "application/json" }, body: JSON.stringify(body) } : {}),
+        signal: ctrl.signal,
+      });
+      clearTimeout(timer);
+      return res.ok ? await res.json() : undefined;
+    } catch {
+      if (attempt >= retries) return undefined;
+      await new Promise((r) => setTimeout(r, 400)); // the daemon may be warming up — back off and retry
+    }
   }
+}
+
+/** Resolve one Ollama model to a catalog entry — authoritative blob GGUF first, /api/show fallback. */
+async function resolveOllamaModel(
+  base: string,
+  modelsDir: string,
+  m: NonNullable<TagsResponse["models"]>[number],
+): Promise<CatalogEntry | undefined> {
+  const quant = quantFromLabel(m.details?.quantization_level);
+  let info: GgufModelInfo | undefined;
+  let note: string | undefined;
+
+  const manifest = await readFile(ollamaManifestPath(modelsDir, m.name), "utf8")
+    .then((s) => JSON.parse(s) as OllamaManifest)
+    .catch(() => undefined);
+  const blob = manifest ? blobPathFromManifest(modelsDir, manifest) : undefined;
+  if (blob) info = await readGgufMetadata(blob).then(ggufToModelInfo).catch(() => undefined);
+
+  if (!info) {
+    const show = (await ollamaFetch(`${base}/api/show`, { model: m.name })) as ShowResponse | undefined;
+    if (show?.model_info) {
+      info = ggufModelInfoFromMetadata(new Map(Object.entries(show.model_info)));
+      note = "metadata from /api/show (no tensor info — MoE active-param count unavailable)";
+    }
+  }
+  if (!info) return undefined;
+
+  const model = toModelMeta(info, m.name, {
+    ...(m.size !== undefined ? { sizeBytes: m.size } : {}),
+    ...(quant ? { quant } : {}),
+  });
+  if (!model) return undefined;
+  return {
+    id: m.name,
+    source: "ollama",
+    model,
+    ...(m.size !== undefined ? { installedBytes: m.size } : {}),
+    ...(note ? { note } : {}),
+  };
 }
 
 /**
  * Enumerate installed Ollama models. Metadata comes from the raw blob GGUF when reachable
- * (authoritative: exact params + expert counts), falling back to /api/show otherwise.
+ * (authoritative: exact params + expert counts), falling back to /api/show otherwise. Models are
+ * resolved in parallel; the tags call retries once in case the daemon is still warming up.
  */
 export async function catalogFromOllama(opts: OllamaCatalogOptions = {}): Promise<CatalogEntry[]> {
   const base = baseUrl(opts);
   const modelsDir = opts.modelsDir ?? process.env.OLLAMA_MODELS ?? join(homedir(), ".ollama", "models");
-  const tags = (await ollamaFetch(`${base}/api/tags`)) as TagsResponse | undefined;
+  const tags = (await ollamaFetch(`${base}/api/tags`, undefined, 1)) as TagsResponse | undefined;
   if (!tags?.models) return [];
 
-  const out: CatalogEntry[] = [];
-  for (const m of tags.models) {
-    const quant = quantFromLabel(m.details?.quantization_level);
-    let info: GgufModelInfo | undefined;
-    let note: string | undefined;
-
-    const manifest = await readFile(ollamaManifestPath(modelsDir, m.name), "utf8")
-      .then((s) => JSON.parse(s) as OllamaManifest)
-      .catch(() => undefined);
-    const blob = manifest ? blobPathFromManifest(modelsDir, manifest) : undefined;
-    if (blob) info = await readGgufMetadata(blob).then(ggufToModelInfo).catch(() => undefined);
-
-    if (!info) {
-      const show = (await ollamaFetch(`${base}/api/show`, { model: m.name })) as ShowResponse | undefined;
-      if (show?.model_info) {
-        info = ggufModelInfoFromMetadata(new Map(Object.entries(show.model_info)));
-        note = "metadata from /api/show (no tensor info — MoE active-param count unavailable)";
-      }
-    }
-    if (!info) continue;
-
-    const model = toModelMeta(info, m.name, {
-      ...(m.size !== undefined ? { sizeBytes: m.size } : {}),
-      ...(quant ? { quant } : {}),
-    });
-    if (!model) continue;
-    out.push({
-      id: m.name,
-      source: "ollama",
-      model,
-      ...(m.size !== undefined ? { installedBytes: m.size } : {}),
-      ...(note ? { note } : {}),
-    });
-  }
-  return out;
+  const entries = await Promise.all(tags.models.map((m) => resolveOllamaModel(base, modelsDir, m)));
+  return entries.filter((e): e is CatalogEntry => e !== undefined);
 }

@@ -40,6 +40,7 @@ test("catalogFromGgufFile builds a CatalogEntry from a local file", async () => 
   const entries: GgufKV[] = [
     { key: "general.architecture", type: GgufValueType.STRING, value: "qwen3" },
     { key: "general.file_type", type: GgufValueType.UINT32, value: 15 },
+    { key: "general.parameter_count", type: GgufValueType.UINT64, value: 30_000_000_000 },
     { key: "qwen3.block_count", type: GgufValueType.UINT32, value: 48 },
     { key: "qwen3.attention.head_count", type: GgufValueType.UINT32, value: 32 },
     { key: "qwen3.attention.head_count_kv", type: GgufValueType.UINT32, value: 4 },

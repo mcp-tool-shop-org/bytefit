@@ -45,6 +45,7 @@ test("kvHeadsAssumed propagates into ModelMeta.arch", () => {
     md({
       "general.architecture": "gemma4",
       "general.file_type": 15,
+      "general.parameter_count": 31_000_000_000,
       "gemma4.block_count": 60,
       "gemma4.attention.head_count": 32,
       "gemma4.attention.key_length": 512,
