@@ -110,6 +110,11 @@ async function main(): Promise<number> {
       return 2;
     }
   }
+  // Reject an unrecognized --use-case at the boundary (it gates the quant floor) — parity with --backend/--ctx.
+  if (typeof flags["use-case"] === "string" && !["reasoning", "chat", "bulk"].includes(flags["use-case"])) {
+    console.error(`bad --use-case '${flags["use-case"]}' — expected: reasoning | chat | bulk`);
+    return 2;
+  }
 
   if (cmd === "probe") {
     const hw = await probe({ measureDisk: flags.experimental === true });

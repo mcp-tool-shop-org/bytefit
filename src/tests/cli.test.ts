@@ -39,6 +39,10 @@ test("a bad --ctx is rejected at the boundary (exit 2), never fed to the planner
   }
 });
 
+test("an unrecognized --use-case is rejected at the boundary (exit 2)", () => {
+  assert.equal(run("recommend", "--use-case", "bogus").status, 2);
+});
+
 test("a boolean flag before the model id does not swallow it (exit != 2 usage error)", () => {
   // If --json swallowed the id, plan would have no positional and exit 2 'usage'. A bogus id instead
   // reaches resolution and exits 1 (not found) — proving the id was parsed, not eaten by the flag.

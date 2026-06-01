@@ -2,7 +2,7 @@ import type { Loadout } from "../types.js";
 import type { Backend, EmittedCommand, EmitOptions } from "./types.js";
 
 const SPEC_HINT =
-  "Bandwidth-bound tier — add a speculative draft model: --model-draft <draft.gguf> --spec-draft-n-max 16 (EAGLE-2 / Medusa head preferred).";
+  "Bandwidth-bound tier — speculative decoding can reclaim ~1.7–2.5× at batch=1 (not the 3–4× lab ceiling): a trained EAGLE-2 head (--model-draft <draft.gguf> --spec-draft-n-max 16) for dense, or self-speculative/early-exit with no extra model. Avoid draft-tree spec on a low-active MoE (it can net-slow decode).";
 
 function refusedCommand(backend: Backend, loadout: Loadout): EmittedCommand {
   return { backend, warnings: [`Refused: ${loadout.refusal?.message ?? "won't fit"}`] };

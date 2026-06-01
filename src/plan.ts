@@ -189,8 +189,11 @@ export function plan(req: PlanRequest): Loadout {
   }
 
   if (speculativeLane !== "none") {
+    const lowActiveMoE = model.isMoE && (model.activatedParams ?? model.totalParams) < 0.15 * model.totalParams;
     reasoning.push(
-      "Bandwidth-bound tier — attach speculative decoding (EAGLE-2 if a draft head exists, else Medusa; self-speculative is the zero-cost fallback).",
+      lowActiveMoE
+        ? "Bandwidth-bound tier — use SELF-speculative decoding only. Do NOT attach a draft-tree method (EAGLE/Medusa) on a low-active MoE: each draft token routes to different experts, so verifying a draft tree activates many more experts and can NET-SLOW decode (research-grounding #44)."
+        : "Bandwidth-bound tier — attach speculative decoding (EAGLE-2 with a trained draft head, else self-speculative). Expect ~1.7–2.5× at batch=1, not the 3–4× lab ceiling (research-grounding #43).",
     );
   }
   if (predicted > 0 && predicted < INTERACTIVE_MIN_TOK_PER_SEC && useCase !== "bulk") {
