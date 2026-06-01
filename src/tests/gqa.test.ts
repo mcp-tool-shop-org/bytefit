@@ -22,6 +22,7 @@ test("absent head_count_kv → kvHeads = head_count but flagged kvHeadsAssumed",
   assert.equal(info.kvHeads, 32, "falls back to head_count");
   assert.equal(info.headDim, 512, "uses key_length, not embedding/head_count");
   assert.equal(info.kvHeadsAssumed, true, "flags the no-GQA assumption");
+  assert.equal(info.headDimAssumed ?? false, false, "key_length present → headDim not assumed");
 });
 
 test("present head_count_kv (real GQA) is used and NOT flagged assumed", () => {
@@ -52,4 +53,20 @@ test("kvHeadsAssumed propagates into ModelMeta.arch", () => {
   const mm = toModelMeta(info, "gemma4:test");
   assert.ok(mm, "model is accepted (not dropped)");
   assert.equal(mm?.arch.kvHeadsAssumed, true);
+});
+
+test("absent key_length → headDim derived from embedding/head_count and flagged headDimAssumed", () => {
+  const info = ggufModelInfoFromMetadata(
+    md({
+      "general.architecture": "llamaish",
+      "general.file_type": 15,
+      "llamaish.block_count": 32,
+      "llamaish.attention.head_count": 32,
+      "llamaish.attention.head_count_kv": 8,
+      "llamaish.embedding_length": 4096,
+    }),
+  );
+  assert.equal(info.headDim, 128, "4096 / 32 = 128");
+  assert.equal(info.headDimAssumed, true, "flags the derived headDim");
+  assert.equal(info.kvHeadsAssumed ?? false, false, "head_count_kv present → kvHeads not assumed");
 });

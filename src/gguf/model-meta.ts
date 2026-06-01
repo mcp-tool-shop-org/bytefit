@@ -26,6 +26,8 @@ export interface GgufModelInfo {
   /** True when `head_count_kv` was absent and kvHeads was assumed = head_count (no GQA). */
   kvHeadsAssumed?: boolean;
   headDim?: number;
+  /** True when `key_length` was absent and headDim was derived from embedding/head_count. */
+  headDimAssumed?: boolean;
   embeddingLength?: number;
   contextLength?: number;
   isMoE: boolean;
@@ -75,6 +77,9 @@ export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: G
   const embeddingLength = asNumber(g("embedding_length"));
   const headDim =
     keyLength ?? (embeddingLength !== undefined && headCount ? embeddingLength / headCount : undefined);
+  // key_length is authoritative; the embedding/head_count fallback is wrong for decoupled-head archs
+  // (e.g. Gemma fixes head_dim independent of d_model) — flag it as an assumption when it's used.
+  const headDimAssumed = keyLength === undefined && headDim !== undefined;
   const expertCount = asNumber(g("expert_count")) ?? 0;
 
   const fileType = asNumber(md.get("general.file_type"));
@@ -93,6 +98,7 @@ export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: G
     kvHeads,
     kvHeadsAssumed,
     headDim,
+    headDimAssumed,
     embeddingLength,
     contextLength: asNumber(g("context_length")),
     isMoE: expertCount > 0,

@@ -47,9 +47,12 @@ export function plan(req: PlanRequest): Loadout {
   reasoning.push(
     `Usable ${fmtGiB(usableVram)} VRAM + ${fmtGiB(usableRam)} RAM after headroom; KV ${fmtGiB(kvTotal)} (${kvCacheType}, ${contextLength} ctx).`,
   );
-  if (model.arch.kvHeadsAssumed) {
+  if (model.arch.kvHeadsAssumed || model.arch.headDimAssumed) {
+    const omitted: string[] = [];
+    if (model.arch.kvHeadsAssumed) omitted.push(`head_count_kv (no-GQA assumed, kvHeads=${model.arch.kvHeads})`);
+    if (model.arch.headDimAssumed) omitted.push(`key_length (headDim≈${model.arch.headDim})`);
     reasoning.push(
-      `KV is an upper bound: this GGUF omits head_count_kv, so no-GQA is assumed (kvHeads=${model.arch.kvHeads}). A GQA model would use less KV and may reach a faster tier.`,
+      `KV is an upper bound — this GGUF omits ${omitted.join(" and ")}; actual KV may be smaller, so a faster tier could fit.`,
     );
   }
 

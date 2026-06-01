@@ -51,6 +51,11 @@ export interface ModelArch {
    * Kept conservative (paging-safe), but surfaced so the recommendation is honest about it.
    */
   kvHeadsAssumed?: boolean;
+  /**
+   * True when key_length was absent and headDim was derived from embedding/head_count (approximate
+   * for decoupled-head archs). Like kvHeadsAssumed, makes the KV estimate an upper-ish bound.
+   */
+  headDimAssumed?: boolean;
 }
 
 export interface ModelMeta {

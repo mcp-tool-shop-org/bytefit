@@ -26,6 +26,7 @@ export function toModelMeta(
       kvHeads: info.kvHeads,
       headDim: info.headDim,
       ...(info.kvHeadsAssumed ? { kvHeadsAssumed: true } : {}),
+      ...(info.headDimAssumed ? { headDimAssumed: true } : {}),
     },
     builds: [{ quant, ...(opts.sizeBytes !== undefined ? { sizeBytes: opts.sizeBytes } : {}) }],
   };
