@@ -88,6 +88,16 @@ async function main(): Promise<number> {
     return 0;
   }
 
+  // Reject a bad --ctx at the boundary (usage error, exit 2) instead of feeding NaN/negative/0 into
+  // the planner. `--ctx` with no value parses to boolean true → NaN here, also rejected.
+  if (flags.ctx !== undefined) {
+    const c = typeof flags.ctx === "string" ? Number(flags.ctx) : NaN;
+    if (!Number.isInteger(c) || c <= 0 || c > 1_048_576) {
+      console.error(`bad --ctx '${String(flags.ctx)}' — expected a positive integer up to 1048576`);
+      return 2;
+    }
+  }
+
   if (cmd === "probe") {
     const hw = await probe();
     if (json) return console.log(JSON.stringify(hw, null, 2)), 0;

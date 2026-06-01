@@ -42,6 +42,24 @@ export function plan(req: PlanRequest): Loadout {
   const ramHeadroomBytes = opts.ramHeadroomBytes ?? DEFAULT_RAM_HEADROOM_BYTES;
   const experimentalDisk = opts.experimentalDisk ?? false;
 
+  // Context length is load-bearing input (drives KV → admission). Reject non-finite / non-positive
+  // here in the pure core rather than letting NaN/negative flow into the math: a NaN context silently
+  // routes to a false "won't fit" refusal and a negative one inflates the budget into a false "fits".
+  if (!Number.isFinite(contextLength) || contextLength <= 0) {
+    return {
+      modelId: model.id,
+      verdict: "refused",
+      kvCacheType,
+      contextLength,
+      reasoning: [`Invalid context length (${contextLength}).`],
+      refusal: {
+        code: "INVALID_CONTEXT",
+        message: `Context length must be a positive integer (got ${contextLength}).`,
+        hint: "Pass a positive --ctx (e.g. 8192), or omit it to use the 8192 default.",
+      },
+    };
+  }
+
   const reasoning: string[] = [];
   const usableVram = usableBytes(hardware.vramFreeBytes, hardware.vramBytes, vramHeadroomBytes, VRAM_USABLE_FRACTION);
   const usableRam = usableBytes(hardware.ramFreeBytes, hardware.ramBytes, ramHeadroomBytes, RAM_USABLE_FRACTION);

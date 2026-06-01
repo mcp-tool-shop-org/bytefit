@@ -39,6 +39,17 @@ test("P0 regression: Qwen3-Next-80B-A3B at 4-bit is NOT refused on a 64 GB consu
   assert.ok((lo.predictedTokensPerSec ?? 0) > 0);
 });
 
+test("invalid context length is refused cleanly, not silently mis-planned", () => {
+  for (const ctx of [0, -8192, NaN, Infinity]) {
+    const lo = plan({ hardware: omen, model: qwen14b, options: { contextLength: ctx } });
+    assert.equal(lo.verdict, "refused", `ctx=${ctx} should refuse`);
+    assert.equal(lo.refusal?.code, "INVALID_CONTEXT", `ctx=${ctx} code`);
+  }
+  // a valid context still plans normally
+  const ok = plan({ hardware: omen, model: qwen14b, options: { contextLength: 8192 } });
+  assert.notEqual(ok.verdict, "refused");
+});
+
 test("recommend ranks runnable models best-first and drops refused ones", () => {
   const recs = recommend(weak, [qwen14b, qwen30bA3b, deepseekR1], { useCase: "chat" });
   assert.ok(recs.length >= 1);
