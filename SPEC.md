@@ -69,8 +69,8 @@ Gather §3. NVMe bandwidth is measured only when a disk tier is a candidate.
 MoE sparsity is *free* quality (structural, not lossy), so it is decided before quantization.
 If the model is MoE:
 - Split: attention + shared experts + KV → GPU; routed experts → CPU (or disk, experimental).
-- Hot-expert placement by **activation frequency** (power-law, ~90% stable), not LRU; cache ≈ 2x active experts.
-- Async-prefetch experts from the prior token's router output (~80–90% hit).
+- Hot-expert placement by **LFU / activation-frequency** (Lin, He & Chen 2025, arXiv:2511.05814 — LFU beats LRU), not LRU; cache ≈ 2x active experts.
+- Async-prefetch experts one layer ahead from the prior token's router output (**~60–70% hit**, workload-dependent; Eliseev & Mazur 2023, arXiv:2312.17238 Fig. 2).
 - Emit a routing-consistency score; warn on shared-expert / sparse-interval models (Jamba-class).
 
 **Hard RAM-residency wall (verified — primary sources):** expert offload is bounded by *total
@@ -88,7 +88,7 @@ never the native/FP32 size. (KTransformers tutorial; Unsloth R1-0528 / Qwen3-Nex
 ### Step 2 — Quant selection
 - **Core heuristic:** prefer the crushed big model — accuracy-per-VRAM-byte favors more params
   at fewer bits (a Q4 13B beats an FP16 7B in the same footprint).
-- Floor **Q4_K_M** for reasoning (3-bit cliff). [VERIFY: Kurt 2026 single, recent source]
+- Floor **Q4_K_M** for reasoning (the 4→3-bit cliff; Dettmers & Zettlemoyer 2022, arXiv:2212.09720 — 4-bit is near-universally optimal for total bits vs accuracy; the trend reverses at 3-bit).
 - Below 4-bit, only imatrix / IQ quants.
 - Prefer an Unsloth Dynamic GGUF when one exists — per-tensor mixed precision; the value is
   bit-allocation by tensor *sensitivity* (e.g. ~88% of DeepSeek-R1 is MoE weights; attention,
@@ -97,11 +97,11 @@ never the native/FP32 size. (KTransformers tutorial; Unsloth R1-0528 / Qwen3-Nex
 
 ### Step 3 — KV cache
 - Default **q8_0** — near-lossless, ~2x context per VRAM byte, <5% speed hit.
-- q4_0 only when context is the explicit goal (~3x context, ~+36% long-context latency).
+- q4_0 only when context is the explicit goal (~3x context; adds per-token dequant overhead that grows with context — magnitude workload-dependent, no verified fixed-% figure).
 - Any eviction / sliding-window must pin the first 4 attention-sink tokens.
 - Extreme-context mode: token eviction (H2O / SnapKV) stacked on quant.
 - FlashAttention is assumed-on; it enables long context but does **not** shrink the KV cache.
-- ⚠ Unified-memory (Apple Silicon): q4_0 KV can *raise* total RSS (metadata overhead) — keep q8_0 there.
+- ⚠ Unified-memory (Apple Silicon): q4_0 KV forces a Metal FlashAttention path and costs ~10–33% decode tok/s (llama.cpp #8918) — keep q8_0 there.
 
 ### Step 4 — Tier placement + admission control
 - Fits VRAM → fast lane.
@@ -145,12 +145,13 @@ A **loadout**:
 ## 7. Reference targets — 12 GB VRAM / 16 GB RAM (worked example)
 
 The "punch above your weight" answer for this tier is **not** DeepSeek-from-disk. Architecture
-is verified; **sizes marked [VERIFY] come from a secondary report and must be confirmed against
-primary GGUF builds before they are hard-coded into the catalog.**
+is verified. The sizes below are **illustrative secondary figures for the worked example only** —
+bytefit never hard-codes them: real `sizeBytes` always comes from the live GGUF header / Ollama /
+`--hf` tree, so an approximate number here can never drive an admission verdict.
 
-- **Comfortable:** 14B dense at Q4_K_M / Q5_K_M (~9 / ~10.5 GB [VERIFY]). The "feels local" tier.
+- **Comfortable:** 14B dense at Q4_K_M / Q5_K_M (~9 / ~10.5 GB, illustrative). The "feels local" tier.
 - **Stretch:** Qwen3-30B-A3B — 30.5B total / **3.3B activated** / 128 experts / 8 active
-  (CONFIRMED) — at aggressive quant + CPU experts + short context (~10.4 GB IQ2_M / ~14.6 GB Q3_K_L [VERIFY]).
+  (CONFIRMED) — at aggressive quant + CPU experts + short context (~10.4 GB IQ2_M / ~14.6 GB Q3_K_L, illustrative).
 - **Possible but degraded:** dense 32B at low quant + partial offload + short context — not the default if latency matters.
 - **Refused:** DeepSeek-V3/R1-class — wants server RAM.
 
@@ -178,7 +179,8 @@ Two sources: a 5-agent study-swarm (technique ceiling) and a primary-source veri
 - KTransformers — SOSP'25 + [DeepSeek R1/V3 tutorial](https://github.com/kvcache-ai/ktransformers/blob/main/doc/en/DeepseekR1_V3_tutorial.md); [2026 roadmap #1921](https://github.com/kvcache-ai/ktransformers/issues/1921); [SSD-expert feature request #1421](https://github.com/kvcache-ai/ktransformers/issues/1421)
 - Unsloth Dynamic GGUF — [R1-0528](https://unsloth.ai/blog/deepseek-r1-0528); [1.58-bit dynamic](https://unsloth.ai/blog/deepseekr1-dynamic)
 - MoE offload — PowerInfer (arXiv:2312.12456); Fiddler (arXiv:2402.07033); Mixtral-offloading (arXiv:2312.17238); routing consistency (arXiv:2505.16056)
-- Quant — Lee 2024 (arXiv:2409.11055); Badshah & Sajjad (arXiv:2405.03146); AQLM (arXiv:2401.06118); QuIP# (arXiv:2402.04396); BitNet (arXiv:2402.17764)
+- Quant — **Dettmers & Zettlemoyer 2022 (arXiv:2212.09720 — the 4→3-bit cliff, primary)**; Li 2025 (arXiv:2505.11574 — quantization-vs-reasoning); ParetoQ (arXiv:2502.02631); AQLM (arXiv:2401.06118); QuIP# (arXiv:2402.04396)
+- **Full verified floor (31 findings + verification pass): `docs/research-grounding.md`.**
 - KV cache — KVQuant (arXiv:2401.18079); KIVI (arXiv:2402.02750); H2O (arXiv:2306.14048); StreamingLLM (arXiv:2309.17453); SnapKV (arXiv:2404.14469); FlashAttention (arXiv:2205.14135)
 - Planner — FlexGen (arXiv:2303.06865); roofline / LLM-Viewer (arXiv:2402.16363); GGUF VRAM formula (oobabooga)
 - Speculative decoding — Leviathan (arXiv:2211.17192); EAGLE-2 (arXiv:2406.16858); Medusa (arXiv:2401.10774); self-speculative (arXiv:2309.08168)
@@ -193,5 +195,5 @@ Two sources: a 5-agent study-swarm (technique ceiling) and a primary-source veri
 | Disk-streaming maturity (experimental) | CONFIRMED (roadmap + open issue) |
 | Competitive wedge open | CONFIRMED (matrix, primary) |
 | Qwen3-30B-A3B architecture | CONFIRMED (model card) |
-| GGUF size catalog (§7) | VERIFY-BEFORE-HARDCODE (secondary) |
-| 3-bit quant cliff (Kurt 2026) | VERIFY (single, recent source) |
+| GGUF size catalog (§7) | Illustrative only — bytefit reads real `sizeBytes` live; never hard-coded |
+| 4→3-bit quant cliff | CONFIRMED (primary: Dettmers & Zettlemoyer 2022, arXiv:2212.09720) |
