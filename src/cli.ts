@@ -55,9 +55,35 @@ async function gatherCatalog(flags: Flags): Promise<CatalogEntry[]> {
   return entries;
 }
 
+function printHelp(): void {
+  console.log(`bytefit — hardware-aware local-LLM loadout planner
+
+Usage:
+  bytefit probe                      Detect GPU / VRAM / RAM / NVMe and print the hardware profile
+  bytefit recommend [options]        Rank installed models best-first for this machine
+  bytefit plan <model-id> [options]  Plan one model (quant + KV + offload + runtime args), or refuse
+
+Options:
+  --json                 Machine-readable JSON output
+  --dir <path>           Also scan a folder of .gguf files (in addition to Ollama)
+  --ctx <n>              Context length in tokens (default 8192)
+  --use-case <c>         reasoning | chat | bulk (default chat) — gates the quant floor
+  --backend <b>          llama.cpp | ollama | lmstudio (plan only; default llama.cpp)
+  --experimental         Allow the experimental MoE disk-streaming tier (MoE only)
+  -h, --help             Show this help
+
+Models are read from Ollama (OLLAMA_HOST, default 127.0.0.1:11434) and any --dir folder.
+Exit codes: 0 ok · 1 not found / refused · 2 usage error.`);
+}
+
 async function main(): Promise<number> {
   const { cmd, positional, flags } = parseArgs(process.argv.slice(2));
   const json = flags.json === true;
+
+  if (cmd === "help" || flags.help === true || flags.h === true) {
+    printHelp();
+    return 0;
+  }
 
   if (cmd === "probe") {
     const hw = await probe();
@@ -75,12 +101,14 @@ async function main(): Promise<number> {
     const recs = recommend(hw, cat.map((e) => e.model), planOptions(flags));
     if (json) return console.log(JSON.stringify(recs.map((r) => r.loadout), null, 2)), 0;
     console.log(`${hw.gpu.name} / ${gi(hw.vramBytes)} GiB VRAM / ${gi(hw.ramBytes)} GiB RAM — ${cat.length} models, ${recs.length} runnable:\n`);
+    if (cat.length === 0) console.log("No models found — is Ollama running? (run `ollama serve`) Or pass --dir <gguf-folder>.\n");
     for (const r of recs) {
       const l = r.loadout;
       console.log(
         `  ${l.modelId.padEnd(24)} ${l.verdict.toUpperCase().padEnd(9)} ${l.quant} ${l.kvCacheType} ctx${l.contextLength}  ~${(l.predictedTokensPerSec ?? 0).toFixed(0)} tok/s  [${l.placement?.tier}]`,
       );
     }
+    for (const n of hw.notes) console.log(`note: ${n}`);
     return 0;
   }
 
@@ -98,9 +126,20 @@ async function main(): Promise<number> {
     }
     const hw = await probe();
     const cat = await gatherCatalog(flags);
-    const entry = cat.find((e) => e.id === id) ?? cat.find((e) => e.id.startsWith(id));
+    // Deterministic resolution: exact id wins; otherwise a prefix must be UNIQUE (no arbitrary pick).
+    const exact = cat.find((e) => e.id === id);
+    const prefixed = cat.filter((e) => e.id.startsWith(id));
+    const entry = exact ?? (prefixed.length === 1 ? prefixed[0] : undefined);
     if (!entry) {
-      console.error(`model '${id}' not found in catalog`);
+      if (prefixed.length > 1) {
+        console.error(`model '${id}' is ambiguous — matches: ${prefixed.map((e) => e.id).join(", ")}`);
+        return 2;
+      }
+      console.error(
+        cat.length
+          ? `model '${id}' not found. Available: ${cat.map((e) => e.id).join(", ")}`
+          : `model '${id}' not found — catalog is empty. Is Ollama running? (run \`ollama serve\`) or pass --dir <gguf-folder>.`,
+      );
       return 1;
     }
     const lo = plan({ hardware: hw, model: entry.model, options: planOptions(flags) });

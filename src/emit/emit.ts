@@ -30,7 +30,8 @@ export function emitLlamaCpp(loadout: Loadout, opts: EmitOptions = {}): EmittedC
       if (p.tier === "vram+ram") args.push("--mlock"); // keep the RAM-resident weights from paging
     }
   }
-  if (loadout.kvCacheType) args.push("-ctk", loadout.kvCacheType, "-ctv", loadout.kvCacheType);
+  // f16 is llama.cpp's default KV type — only emit -ctk/-ctv when we actually want a quantized cache.
+  if (loadout.kvCacheType && loadout.kvCacheType !== "f16") args.push("-ctk", loadout.kvCacheType, "-ctv", loadout.kvCacheType);
   args.push("-fa", "on");
 
   if (loadout.speculativeLane && loadout.speculativeLane !== "none") warnings.push(SPEC_HINT);
