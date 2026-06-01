@@ -261,3 +261,164 @@ locked — exactly why the verification pass exists:
 - Lin, He & Chen 2025 — MoE Caching/Prefetch Analysis (LFU>LRU) — arXiv:2511.05814 · Eliseev & Mazur 2023 — Fast MoE Offloading — arXiv:2312.17238
 - KTransformers — DeepseekR1_V3 tutorial (382 GB/1 TB) · Qwen3-Next-80B-A3B model card
 - Dao et al. — FlashAttention · SGLang FA3 — arXiv:2505.21487 · EAGLE-2 2024 — arXiv:2406.16858
+
+---
+
+# Study-swarm 2 (2026-06-01) — verified extensions (findings 32–50)
+
+> Five new study-swarms for the **second** dogfood pass, grounding the questions pass 1 left open
+> (predictor calibration / batch=1-MoE efficiency, q4_0 KV latency, sliding-window KV + compute buffer,
+> NVMe random-access, speculative-decoding gating). **Every load-bearing citation passed a two-stage
+> verification before locking here** (per `feedback_verify_load_bearing_facts.md`): a WebFetch retrieval
+> oracle against the primary sources (9 papers checked) + a different-family groundedness pass
+> (granite4.1:30b `run_2026-06-01T23-13-43_30f457`, mistral-small:24b `run_2026-06-01T23-14-13_c27f61`,
+> reasoning-stripped). **Caught & corrected:** the InnerQ author was mis-guessed as "Wang et al." → it is
+> **Tayaranian Hosseini et al.** (the retrieval oracle caught it). Specific in-body numbers flagged as
+> figure-reads are labeled *(figure-read)*. The empirical MoE anchor was **re-measured** after the swarm
+> flagged a possible artifact (see finding 33).
+
+## F. MoE batch=1 decode efficiency — `roofline.ts` / `constants.ts` (study #1)
+
+32. **MoE batch=1 decode is memory-bound on the *activated-expert* weight bytes — the inefficiency is a
+    multiplier on the active-byte roofline, not a different numerator.** Oncescu et al. 2025,
+    *Opportunistic Expert Activation* (arXiv:2511.02237, VERIFIED); Yu et al. 2025, *Balance Activated
+    Experts* (arXiv:2512.09277) — "activation's memory traffic is <0.6% of the expert weights' memory
+    traffic." → keep the roofline numerator = active-expert + attention + embedding bytes; the
+    inefficiency rides on top as `efficiency`.
+
+33. **The inefficiency has TWO components — a fixed per-token bookkeeping overhead + sub-peak bandwidth
+    from fragmented (non-contiguous) expert reads — so efficiency RISES with active bytes (the overhead
+    amortizes).** Cursor *warp-decode* 2026 (engineering blog) — even an optimized kernel hits only ~58%
+    of peak at B=32, "random access patterns expert routing creates"; Adhinarayanan & Jayasena 2026,
+    *The qs Inequality* (arXiv:2603.08960, VERIFIED) — "expert routing fragments microbatches and reduces
+    weight reuse," DeepSeek-V3 quality-matched dense is **4.5× faster at 128k context**. *(R_moe ≈ B·k/E
+    is figure-read.)*
+    → **REPLACE the flat `MOE_DECODE_EFFICIENCY = 0.18` with an active-byte curve**
+    `eff_moe(active_GB) = MOE_CEILING · active_GB / (active_GB + MOE_OVERHEAD_GB)`. Re-measured anchor on
+    this rig: `qwen3.6:35b-a3b` Q4_K_M = **137–139 tok/s at ctx 2048/4096, 100% GPU, reproducible** (the
+    earlier 136 was NOT a 32k-ctx artifact — it is the clean Ollama/Q4_K_M number; eff ≈ 0.167 on ~2.2 GB
+    active). Literature high-active anchor: DeepSeek-R1 37B-active Q4 ≈ **0.42** effective (Groundy, M3
+    Ultra ~800 GB/s). Fitting both → **MOE_CEILING ≈ 0.55, MOE_OVERHEAD_GB ≈ 5.0** (gives 0.167 at 2.2 GB,
+    0.43 at 18.5 GB). *Caveat: the DeepSeek anchor is a different memory regime (server/unified DRAM, not
+    5090 VRAM) — an order-of-magnitude sanity check, not a co-equal calibration point.*
+
+34. **A flat efficiency over-penalizes large-active MoE and is also engine-specific.** Published 5090
+    benchmarks reach ~197 tok/s for the A3B family under **llama.cpp + IQ4_XS** (byteshape) vs the 137 I
+    measure under **Ollama + Q4_K_M** — the gap is engine + quant, so the fitted constant is a
+    llama.cpp/Ollama-Q4 figure. PyTorch grouped-GEMM blog 2026 shows vLLM/Triton MoE paths are better
+    optimized. → the curve is bytefit's **reference-engine** efficiency; document the engine scope.
+
+35. **Apply the MoE penalty ONLY to VRAM-resident expert bytes.** The 0.18/curve was measured as a
+    *GPU* sparse-gather penalty; for an OFFLOADED MoE (experts on CPU via `--n-cpu-moe`) the RAM-bus term
+    must NOT take the GPU-under-utilization factor (re-audit `moe-eff-ram-disk-tier-extrapolation`:
+    applying 0.18 to the RAM tier under-predicts ~2.7× and can wrongly drop a borderline offloaded MoE
+    below the interactive filter). → in the roofline, the MoE efficiency multiplies the **VRAM** expert
+    term; RAM/disk terms keep the dense/CPU efficiency.
+
+36. **Effective efficiency also degrades with context (KV steals HBM from experts) — second-order.**
+    qs Inequality (arXiv:2603.08960): the dense-vs-MoE gap grows with context. → keep the curve a
+    short-context number; flag long-context degradation as a known second-order term (not yet modeled).
+
+## G. Sliding-window KV + compute buffer — `footprint.ts` / `model-meta.ts` (study #3)
+
+37. **Gemma 3/4 interleave 5 local sliding-window (1024) layers : 1 global layer — only the ~1/6 global
+    layers cache full context.** Gemma Team 2025, *Gemma 3 Technical Report* (arXiv:2503.19786, VERIFIED:
+    "increasing the ratio of local to global attention layers, and keeping the span on local attention
+    short"); config.json (VERIFIED exactly): `num_hidden_layers=62, num_key_value_heads=16, head_dim=128,
+    sliding_window=1024, sliding_window_pattern=6, cache_implementation="hybrid"`.
+    → **KV split formula:** `KV = 2·bpe·kvHeads·headDim·[ nGlobal·ctx + nLocal·min(ctx, window) ]`, with
+    layer i **global iff `(i+1) % pattern == 0`** (HF Transformers rule), `nGlobal = floor(layers/pattern)`,
+    `nLocal = layers − nGlobal`. For Gemma-3-27B at 32k: naive 16.0 GiB → **3.1 GiB (5.16× less)** — the
+    exact mechanism behind the false-DEGRADE this pass fixed live (gemma4 7→48+ tok/s).
+
+38. **Gemma's own report quantifies it: global-only = ~60% KV overhead at 32k → <15% with 1:5 sliding-1024.**
+    Gemma Team 2025 (arXiv:2503.19786, KV-cache section). → calibration target: a corrected Gemma KV at
+    32k lands ~4–6× below naive — matches the 5.16× above.
+
+39. **llama.cpp/CUDA reserves a compute/graph buffer driven by ubatch (and by context when flash-attn is
+    OFF), plus an unaccounted CUDA-runtime reserve.** llama.cpp #9784/#9936/#10068 (maintainers: "-b 512
+    -ub 512", measured 507 MiB @ub512/ctx4096, 126.75 MiB @ub128/ctx3072); DeepWiki FA (no-FA attention
+    matrix is O(N²), FA tiles to O(N)). → admission term:
+    `computeBuffer ≈ ubatch·hidden·C_act·bpe + (fa ? 0 : kvGroups·ubatch·ctx·bpe) + RUNTIME_RESERVE(~0.5 GiB)`,
+    fail-closed (include the ctx term when FA state is unknown). *(Deferred to a follow-up — admission-side;
+    sliding-window KV is the higher-value fix.)*
+
+## H. q4_0 KV latency — SPEC §3 (study #2)
+
+40. **The softened SPEC language is CORRECT; the old "+36%" was wrong as a constant AND in sign.** The
+    real effect is a **gated context-scaling curve**: ~0% below ~8k → ~−18% @32k → ~−35% @64k → ~−37%
+    @110k on the **non-fused** llama.cpp/Ollama path (NVIDIA DGX Spark forum 365138, llama.cpp build
+    8399). NEUTRAL short-context FA-enabled (smcleod, the Ollama K/V-quant author: "negligible"). On
+    **fused** stacks it INVERTS to a speedup beyond ~7k (vLLM FP8 blog 2026-04-22; InnerQ
+    **Tayaranian Hosseini et al.** 2026, arXiv:2602.23200 — **2.7× speedup**, VERIFIED — the paper the
+    pass-1 swarm had fabricated as a "+36% degradation"). q8_0 ≈ q4_0 in decode penalty (bit-width trades
+    VRAM, not latency). Pathological tail: Gemma3 + quant-KV in Ollama ~5.4× slowdown (#11949).
+    → the gate is **FA on AND ctk==ctv AND arch-in-FA-allowlist** (llama.cpp Discussion #22411: mismatched
+    K/V "silently falls back to the slower non-fused implementation"). Keep SPEC §3 soft + range-valued;
+    do not ship a single % (✓ already done this pass).
+
+## I. NVMe random-access (experimental disk tier) — `probe.ts` / SPEC §3.1 (study #4)
+
+41. **A MoE expert is a 33–340 MB contiguous read, not a 4K random access — so the flat ÷4 is misapplied.**
+    Xue et al. 2024, *MoE-Infinity* (arXiv:2401.14361): a Mixtral expert = 340 MB. At ≥8k-block reads,
+    random ≈ 0.8× sequential (zarr/FireCuda 530) — discount ≈ ÷1.2, not ÷4. → ÷4 is too *pessimistic* for
+    a tuned large-block prefetch path.
+
+42. **But llama.cpp's actual disk path is mmap demand-paging — 4K page faults at QD~1, the worst regime —
+    so ÷4 is too *optimistic* there.** llama.cpp #19163/#18758 (mmap, on-demand page faults); a PCIe4
+    NVMe does ~82 MB/s at 4K-QD1 vs ~7.5 GB/s sequential (Samsung 990 Pro, FPS Review) — a ÷75–90 gap, not
+    ÷4. → **the discount is method-dependent**: mmap-fault floor (~÷80) vs prefetch (~÷1.2); ÷4 matches
+    neither. Default the experimental disk tier to the mmap floor + a "cold-expert streaming is
+    latency-bound" warning, and prefer a one-shot in-place fio probe over any static ratio. Also bound by
+    the pipeline: `min(NVMe_eff, PCIe_BW, host_staging)` (DALI arXiv:2602.03495 — PCIe is up to 78% of
+    expert-movement time). Real tok/s anchor: Qwen3-30B-A3B-Q6_K streams at 22–29 tok/s (llama.cpp #23324).
+
+## J. Speculative-decoding gating — `plan.ts` spec lane (study #5)
+
+43. **The famous "3–4×" is an EAGLE-2 *lab ceiling* on DENSE chat models at greedy decode; real batch=1
+    is ~1.7–2.0×.** Li et al. 2024, *EAGLE-2* (arXiv:2406.16858, VERIFIED: 3.05–4.26×, dense-only); Liu et
+    al. 2026, *Speculative Decoding: Performance or Illusion?* (arXiv:2601.11580, VERIFIED) —
+    **EAGLE on Llama-3.1-8B GSM8K = 1.73× at batch=1** (→1.21× at bs=128), verification = 42–95% of
+    runtime, acceptance 2–4 tokens. → bytefit predicts **~1.7–2.5× for dense**, labels 3–4× as a ceiling,
+    decays with concurrency.
+
+44. **Low-active MoE erodes/reverses the speedup: each draft token routes to a different expert subset, so
+    verifying K drafts activates far more experts than one token.** Saxena et al. 2025, *Utility-Driven
+    Spec-Decode for MoE* (arXiv:2506.20675, VERIFIED VERBATIM: "increasing data movement and verification
+    time by 2-3×", "slowdowns up to 1.5×", cascade "7-14% over static K"); McDanel et al. 2026, *MoE-Spec*
+    (arXiv:2602.16052) — a 127-token tree activates 54/64 OLMoE experts. Real proof: sglang#14824 (EAGLE-3
+    *degrades* on Qwen3-30B-A3B), sglang#5274 (EAGLE-3 217→164 tok/s under concurrency).
+    → **HARD GATE: do NOT auto-suggest naive EAGLE/Medusa for low-active MoE** (active fraction <~15%, e.g.
+    A3B/A22B); default lane NONE or self-speculative.
+
+45. **The roofline explains the gate: spec-decode pays off only where decode is memory-bound; low-active
+    MoE partially escapes memory-boundedness (few active params).** Yuan et al. 2024 (arXiv:2402.16363) —
+    batch=1 decode is memory-bound. → bytefit's instinct (suggest in the bandwidth-bound offload/disk tier)
+    is correct **for dense**; for offload/no-EAGLE-head, prefer **self-speculative / LayerSkip** (Elhoushi
+    et al. 2024, arXiv:2404.16710, VERIFIED — up to 2.16×, no second model to load).
+
+### Study-swarm 2 verification receipt
+
+- **Retrieval oracle (WebFetch vs primary sources):** confirmed existence + attribution + core claim for
+  arXiv 2511.02237, 2512.09277, 2603.08960, 2602.23200, 2503.19786, 2601.11580, 2506.20675, 2406.16858,
+  and the gemma-3-27b config.json. **Caught:** InnerQ author Wang → **Tayaranian Hosseini** (corrected).
+  *(figure-read)* labels applied to in-body numbers not in abstracts (R_moe formula, the latency decomposition).
+- **Different-family groundedness (reasoning-stripped):** granite4.1:30b `run_2026-06-01T23-13-43_30f457`
+  rated all 7 well-known attributions (EAGLE-2/LayerSkip/Medusa/MoE-Infinity/roofline/Dettmers/StreamingLLM)
+  CORRECT and both load-bearing mechanisms PLAUSIBLE; mistral-small:24b `run_2026-06-01T23-14-13_c27f61`
+  confirmed the pre-cutoff subset + mechanisms (recent papers UNKNOWN, as expected — retrieval-verified).
+  **No misattribution among the canon, no contradiction.**
+- **Empirical re-measurement:** the MoE anchor (137–139 tok/s) was re-measured at ctx 2048/4096 100% GPU
+  after study #1 flagged a possible artifact; the 136 stands as the clean Ollama/Q4_K_M number.
+
+### Study-swarm 2 sources (verified 2026-06-01)
+
+- Oncescu et al. 2025 — Opportunistic Expert Activation — arXiv:2511.02237 · Yu et al. 2025 — Balance Activated Experts — arXiv:2512.09277
+- Adhinarayanan & Jayasena 2026 — The qs Inequality — arXiv:2603.08960 · Cursor 2026 — warp-decode (cursor.com/blog/warp-decode)
+- Gemma Team 2025 — Gemma 3 Technical Report — arXiv:2503.19786 · google/gemma-3-27b-it config.json
+- NVIDIA DGX Spark KV-quant benchmark — forums.developer.nvidia.com/t/365138 · vLLM 2026 — FP8 KV-cache blog · smcleod 2024 — Ollama K/V quant · llama.cpp #22411 (fused-FA K/V match)
+- Tayaranian Hosseini et al. 2026 — InnerQ — arXiv:2602.23200 *(speedup, not degradation; corrected from pass-1 fabrication)*
+- Xue et al. 2024 — MoE-Infinity — arXiv:2401.14361 · FPS Review — Samsung 990 Pro · zarr-benchmark #26 · llama.cpp #19163/#23324 · DALI 2026 — arXiv:2602.03495
+- Li et al. 2024 — EAGLE-2 — arXiv:2406.16858 · Liu et al. 2026 — Spec-Decode: Performance or Illusion? — arXiv:2601.11580
+- Saxena et al. 2025 — Utility-Driven Spec-Decode for MoE — arXiv:2506.20675 · McDanel et al. 2026 — MoE-Spec — arXiv:2602.16052 · Elhoushi et al. 2024 — LayerSkip — arXiv:2404.16710
+- llama.cpp #9784/#9936/#10068 (compute buffer) · sglang#5274/#14824 (EAGLE-3 MoE degradation)
