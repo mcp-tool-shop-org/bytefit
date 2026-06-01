@@ -17,7 +17,13 @@ export function emitLlamaCpp(loadout: Loadout, opts: EmitOptions = {}): EmittedC
 
   const p = loadout.placement;
   if (p) {
-    if (p.gpuLayers !== undefined) args.push("-ngl", String(p.gpuLayers));
+    // MoE expert offload keeps ALL layers (attention + shared) on the GPU and moves only the routed
+    // experts off via --n-cpu-moe / -ot — the canonical recipe and exactly what the roofline assumes.
+    // Emit -ngl 99 (all layers) for MoE, NOT the partial weight-fraction count: a partial -ngl would
+    // run most layers' attention on the CPU, so the predicted tok/s would be a lie. The partial
+    // gpuLayers value is for DENSE layer-split offload only.
+    if (p.cpuMoEExperts) args.push("-ngl", "99");
+    else if (p.gpuLayers !== undefined) args.push("-ngl", String(p.gpuLayers));
     if (p.tier !== "vram") {
       // MoE expert offload: a fractional `--n-cpu-moe N` (first N layers' experts on CPU) for a
       // partial offload, or a blanket `-ot ...=CPU` when every layer's experts must leave the GPU

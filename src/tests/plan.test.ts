@@ -50,6 +50,15 @@ test("invalid context length is refused cleanly, not silently mis-planned", () =
   assert.notEqual(ok.verdict, "refused");
 });
 
+test("MoE batch=1 tok/s uses the measured sparse-gather efficiency, not the dense roofline (CAL-1)", () => {
+  // 30B-A3B fits fully in VRAM on the Omen; under the dense eta this over-predicted ~3-4x. Assert a
+  // sane MoE band, not a confident over-prediction.
+  const lo = plan({ hardware: omen, model: qwen30bA3b, options: { useCase: "chat", contextLength: 4096 } });
+  assert.equal(lo.placement?.tier, "vram");
+  const t = lo.predictedTokensPerSec ?? 0;
+  assert.ok(t > 80 && t < 280, `expected a sane MoE band, got ${t} tok/s`);
+});
+
 test("recommend ranks runnable models best-first and drops refused ones", () => {
   const recs = recommend(weak, [qwen14b, qwen30bA3b, deepseekR1], { useCase: "chat" });
   assert.ok(recs.length >= 1);

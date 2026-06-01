@@ -21,6 +21,8 @@ test("llama.cpp emit for a partial MoE offload: fractional --n-cpu-moe + --fit o
   const line = emitLlamaCpp(lo).args?.join(" ") ?? "";
   assert.ok(/--n-cpu-moe \d+/.test(line), `expected --n-cpu-moe N, got: ${line}`);
   assert.ok(!line.includes("-ot"), "partial offload uses --n-cpu-moe, not a blanket -ot");
+  // MoE keeps ALL layers (attention + shared) on GPU; only experts leave via --n-cpu-moe.
+  assert.ok(/-ngl 99\b/.test(line), `MoE offload must emit -ngl 99 (all layers), got: ${line}`);
   assert.ok(line.includes("--fit off"));
   assert.ok(line.includes("--mlock"));
 });

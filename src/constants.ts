@@ -87,6 +87,18 @@ export const RAM_USABLE_FRACTION = 0.75;
 export const BANDWIDTH_EFFICIENCY = 0.7;
 
 /**
+ * Effective VRAM bandwidth realized by MoE decode at batch=1, as a fraction of rated bandwidth — much
+ * lower than the dense {@link BANDWIDTH_EFFICIENCY}. Routed-expert reads are a scattered gather (not
+ * contiguous streaming) and a tiny active set under-utilizes the GPU, so a model whose active bytes
+ * alone would predict hundreds of tok/s lands far lower. INTERIM single-anchor value, measured on this
+ * rig (RTX 5090): qwen3.6:35b-a3b (36B / ~4B active, Q4_K_M) ran **136 tok/s** where the dense roofline
+ * predicted ~490 (3.6× over) — implying ~0.18 effective. Consistent with the KTransformers DeepSeek-R1
+ * range (~8.7–13.7 tok/s, research #27) applied to its 37B active. Fit to ONE MoE architecture — refine
+ * via the batch=1-MoE efficiency study before treating as final. See docs/swarm/calibration-analysis.md.
+ */
+export const MOE_DECODE_EFFICIENCY = 0.18;
+
+/**
  * Random small-block reads (the MoE expert-streaming pattern) run ~3–6× below sequential NVMe
  * (SPEC §3.1); the disk-tier benchmark divides its sequential measurement by this to model effective
  * random access rather than over-promising the disk tier.

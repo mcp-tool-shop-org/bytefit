@@ -16,6 +16,8 @@ import {
   RAM_USABLE_FRACTION,
   INTERACTIVE_MIN_TOK_PER_SEC,
   REASONING_QUANT_FLOOR,
+  MOE_DECODE_EFFICIENCY,
+  BANDWIDTH_EFFICIENCY,
   fmtGiB,
 } from "./constants.js";
 import { selectQuant, smallestQuant, quantQualityRank, lowBitRisk, bytesPerParam, type QuantChoice } from "./quant.js";
@@ -120,7 +122,7 @@ export function plan(req: PlanRequest): Loadout {
 
   if (model.isMoE) {
     reasoning.push(
-      `MoE: ${model.activeExperts ?? "?"}/${model.expertCount ?? "?"} experts active, ${fmtGiB(activeWeightBytesPerToken(model, choice.build))} read/token (vs ${fmtGiB(choice.weightBytes)} total).`,
+      `MoE: ${model.activeExperts ?? "?"}/${model.expertCount ?? "?"} experts active, ${fmtGiB(activeWeightBytesPerToken(model, choice.build))} read/token (vs ${fmtGiB(choice.weightBytes)} total). Batch=1 expert gather is bandwidth-inefficient — tok/s uses a measured MoE factor, not the dense roofline.`,
     );
   }
   reasoning.push(
@@ -154,7 +156,14 @@ export function plan(req: PlanRequest): Loadout {
     };
   }
 
-  const predicted = predictTokensPerSec(hardware, placed.placement, kvTotal);
+  // MoE batch=1 decode realizes far lower effective bandwidth than dense (sparse expert gather); use the
+  // measured MoE factor so the tok/s isn't a confident over-prediction (CAL-1, calibration-analysis.md).
+  const predicted = predictTokensPerSec(
+    hardware,
+    placed.placement,
+    kvTotal,
+    model.isMoE ? { efficiency: MOE_DECODE_EFFICIENCY, kvEfficiency: BANDWIDTH_EFFICIENCY } : {},
+  );
   const speculativeLane: SpeculativeLane = placed.placement.tier === "vram" ? "none" : "self-speculative";
 
   if (placed.placement.tier === "vram") {

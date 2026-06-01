@@ -20,12 +20,17 @@ export function predictTokensPerSec(
   hardware: Hardware,
   placement: Placement,
   kvBytesRead: number,
-  opts: { efficiency?: number; overheadSecondsPerToken?: number } = {},
+  opts: { efficiency?: number; kvEfficiency?: number; overheadSecondsPerToken?: number } = {},
 ): number {
   const eff = opts.efficiency ?? BANDWIDTH_EFFICIENCY;
+  // KV reads are contiguous (dense-efficient) even for MoE, so a low MoE weight-efficiency must not
+  // drag the KV term: `kvEfficiency` defaults to `efficiency` (dense) but a MoE caller passes the
+  // dense factor here while passing the lower sparse-gather factor as `efficiency` for the weights.
+  const kvEff = opts.kvEfficiency ?? eff;
   const overhead = opts.overheadSecondsPerToken ?? 0;
   const vbw = hardware.vramBandwidthBytesPerSec * eff;
   const rbw = hardware.ramBandwidthBytesPerSec * eff;
+  const kvbw = hardware.vramBandwidthBytesPerSec * kvEff;
   let timePerToken = 0;
 
   if (placement.activeVramBytes > 0) {
@@ -41,10 +46,10 @@ export function predictTokensPerSec(
     if (!(dbw > 0)) return 0;
     timePerToken += placement.activeDiskBytes / dbw;
   }
-  // KV cache is assumed to reside in VRAM and is read each decode step.
+  // KV cache is assumed to reside in VRAM and is read each decode step (at the KV efficiency).
   if (kvBytesRead > 0) {
-    if (!(vbw > 0)) return 0;
-    timePerToken += kvBytesRead / vbw;
+    if (!(kvbw > 0)) return 0;
+    timePerToken += kvBytesRead / kvbw;
   }
 
   // Per-token fixed overhead (kernel launch, scheduling, sampling). Default 0 — a calibration hook:
