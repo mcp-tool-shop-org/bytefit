@@ -20,9 +20,10 @@ export function predictTokensPerSec(
   hardware: Hardware,
   placement: Placement,
   kvBytesRead: number,
-  opts: { efficiency?: number } = {},
+  opts: { efficiency?: number; overheadSecondsPerToken?: number } = {},
 ): number {
   const eff = opts.efficiency ?? BANDWIDTH_EFFICIENCY;
+  const overhead = opts.overheadSecondsPerToken ?? 0;
   const vbw = hardware.vramBandwidthBytesPerSec * eff;
   const rbw = hardware.ramBandwidthBytesPerSec * eff;
   let timePerToken = 0;
@@ -45,6 +46,11 @@ export function predictTokensPerSec(
     if (!(vbw > 0)) return 0;
     timePerToken += kvBytesRead / vbw;
   }
+
+  // Per-token fixed overhead (kernel launch, scheduling, sampling). Default 0 — a calibration hook:
+  // roofline + a measured overhead term cuts prediction error materially (Imai 2024, NeurIPS MLForSys),
+  // but no fabricated constant is shipped; a caller can pass a rig-measured value.
+  timePerToken += overhead;
 
   if (!Number.isFinite(timePerToken) || timePerToken <= 0) return 0;
   return 1 / timePerToken;

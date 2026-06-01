@@ -15,7 +15,7 @@ export {
   INTERACTIVE_MIN_TOK_PER_SEC,
   fmtGiB,
 } from "./constants.js";
-export { bytesPerParam, quantQualityRank, buildWeightBytes, selectQuant, smallestQuant } from "./quant.js";
+export { bytesPerParam, quantQualityRank, buildWeightBytes, selectQuant, smallestQuant, isImatrixQuant, lowBitRisk } from "./quant.js";
 export type { QuantChoice } from "./quant.js";
 export { kvBytesPerToken, kvBytesTotal, activeWeightBytesPerToken } from "./footprint.js";
 export { predictTokensPerSec } from "./roofline.js";

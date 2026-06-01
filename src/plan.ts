@@ -15,7 +15,7 @@ import {
   INTERACTIVE_MIN_TOK_PER_SEC,
   fmtGiB,
 } from "./constants.js";
-import { selectQuant, smallestQuant, quantQualityRank, type QuantChoice } from "./quant.js";
+import { selectQuant, smallestQuant, quantQualityRank, lowBitRisk, type QuantChoice } from "./quant.js";
 import {
   kvBytesPerToken,
   kvBytesTotal as computeKvTotal,
@@ -105,6 +105,14 @@ export function plan(req: PlanRequest): Loadout {
     `Quant ${choice.build.quant}${choice.build.dynamic ? " (dynamic)" : ""}: ${fmtGiB(choice.weightBytes)} weights.` +
       (choice.belowReasoningFloor && useCase === "reasoning" ? " Below Q4_K_M floor — degraded for reasoning." : ""),
   );
+  const bitRisk = lowBitRisk(choice.build);
+  if (bitRisk === "risky") {
+    reasoning.push(
+      `${choice.build.quant} is a legacy sub-4-bit quant — below the safe floor; quality can drop sharply (3-bit cliff). Prefer an IQ-quant or a Dynamic GGUF at this size, or a smaller model at Q4+.`,
+    );
+  } else if (bitRisk === "imatrix") {
+    reasoning.push(`${choice.build.quant} is sub-4-bit but imatrix/dynamic-recovered — aggressive; fine for non-reasoning, watch quality.`);
+  }
 
   const placed = placeAndAdmit(hardware, model, choice.build, kvTotal, {
     vramHeadroomBytes,
