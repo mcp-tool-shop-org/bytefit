@@ -51,8 +51,11 @@ bytefit.
 ### 3.1 Hardware probe (I/O shell)
 - **VRAM** — total + free, per GPU (`nvidia-smi`; ROCm / `pynvml`-equivalent later).
 - **System RAM** — total + free.
-- **NVMe bandwidth** — *measured*, not rated. Realistic random read is 3–6x below rated
-  sequential for the expert-access pattern; only measured numbers drive the disk tier.
+- **NVMe bandwidth** — *measured*, not rated, and **method-dependent**: llama.cpp's default mmap
+  demand-paging faults 4K pages at shallow queue depth (≈4K-QD1, ~÷75–90 off sequential), while a tuned
+  large-block prefetch of whole experts (33–340 MB; MoE-Infinity arXiv:2401.14361) approaches ÷1.2 — a
+  flat ÷4 fits neither. bytefit's bench is an **estimated** upper bound (page-cache-contaminated), capped
+  and bounded by `min(NVMe, PCIe, host-staging)`. Only measured numbers drive the disk tier.
 - **Backend** — llama.cpp / Ollama / LM Studio presence + version.
 
 ### 3.2 Model metadata (catalog)
@@ -72,6 +75,9 @@ If the model is MoE:
 - Hot-expert placement by **LFU / activation-frequency** (Lin, He & Chen 2025, arXiv:2511.05814 — LFU beats LRU), not LRU; cache ≈ 2x active experts.
 - Async-prefetch experts one layer ahead from the prior token's router output (**~60–70% hit**, workload-dependent; Eliseev & Mazur 2023, arXiv:2312.17238 Fig. 2).
 - Emit a routing-consistency score; warn on shared-expert / sparse-interval models (Jamba-class).
+- **Predicted decode tok/s uses an active-byte MoE efficiency curve** — batch=1 sparse expert-gather
+  realizes far below dense bandwidth (~0.17 at ~2 GB active on a 5090), rising with active bytes as the
+  fixed per-token overhead amortizes (research-grounding #33). Applied to VRAM-resident experts only.
 
 **Hard RAM-residency wall (verified — primary sources):** expert offload is bounded by *total
 RAM*, not VRAM. DeepSeek-V3/R1-class (671B) genuinely needs **~382 GB DRAM single-socket (1 TB
@@ -99,6 +105,9 @@ never the native/FP32 size. (KTransformers tutorial; Unsloth R1-0528 / Qwen3-Nex
 - Default **q8_0** — near-lossless, ~2x context per VRAM byte, <5% speed hit.
 - q4_0 only when context is the explicit goal (~3x context; adds per-token dequant overhead that grows with context — magnitude workload-dependent, no verified fixed-% figure).
 - Any eviction / sliding-window must pin the first 4 attention-sink tokens.
+- **Sliding-window archs (Gemma-class)** cache full context only on the ~1/6 global layers; local layers
+  cap KV at the window — KV = `nGlobal·ctx + nLocal·min(ctx, window)`, not all-layers·ctx (Gemma 3,
+  arXiv:2503.19786; read `sliding_window` + `sliding_window_pattern` from the GGUF).
 - Extreme-context mode: token eviction (H2O / SnapKV) stacked on quant.
 - FlashAttention is assumed-on; it enables long context but does **not** shrink the KV cache.
 - ⚠ Unified-memory (Apple Silicon): q4_0 KV forces a Metal FlashAttention path and costs ~10–33% decode tok/s (llama.cpp #8918) — keep q8_0 there.
@@ -113,8 +122,12 @@ never the native/FP32 size. (KTransformers tutorial; Unsloth R1-0528 / Qwen3-Nex
   Refusal returns a non-zero exit code and a structured reason `{ code, message, hint }`.
 
 ### Step 5 — Usability reclaim
-Any offload / disk tier is bandwidth-bottlenecked → attach speculative decoding: EAGLE-2 head
-if available (3–4x), else Medusa (single-model), else self-speculative (zero extra weight).
+Any offload / disk tier is bandwidth-bottlenecked → attach speculative decoding. **Realistic batch=1
+gains are ~1.7–2.5×, not the 3–4× lab ceiling** (that is dense chat at greedy decode; Liu et al. 2026
+arXiv:2601.11580 measures ~1.73× on a dense 8B). **Gate on architecture:** dense → EAGLE-2 (trained
+head) or self-speculative; **low-active MoE → self-speculative only — a draft tree activates many more
+experts and can net-slow decode** (Saxena et al. 2025 arXiv:2506.20675). LayerSkip self-speculative
+(arXiv:2404.16710) is the safe no-extra-weight fallback.
 
 ## 5. Output
 
