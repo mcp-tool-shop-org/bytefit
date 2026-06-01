@@ -4,6 +4,10 @@ export class GgufError extends Error {}
 /** Thrown when the buffer ends mid-parse — the file reader grows its read window and retries. */
 export class GgufTruncatedError extends GgufError {}
 
+const MAX_ARRAY_DEPTH = 64; // real GGUF arrays are flat; only a crafted file nests them
+const MAX_ARRAY_ELEMENTS = 1 << 23; // ~8.4M — far above any real vocab/merges array, bounds allocation
+const MAX_TENSOR_DIM = 2 ** 32; // a single tensor axis can't plausibly exceed this; guards u64→Number overflow
+
 class Reader {
   offset = 0;
   constructor(private readonly buf: Buffer) {}
@@ -51,7 +55,13 @@ class Reader {
   }
 }
 
-function readValue(r: Reader, type: number): GgufValue {
+function readValue(r: Reader, type: number, depth = 0): GgufValue {
+  if (depth > MAX_ARRAY_DEPTH) {
+    // Legitimate GGUF arrays are flat; only a crafted file nests them. Cap the recursion so a deeply-
+    // nested array throws a structured GgufError instead of an uncaught RangeError "Maximum call stack
+    // size exceeded" (which read-file/catalog re-raise as a crash, violating the gguf-safety contract).
+    throw new GgufError(`GGUF array nesting too deep (>${MAX_ARRAY_DEPTH})`);
+  }
   switch (type) {
     case GgufValueType.UINT8: return r.u8();
     case GgufValueType.INT8: return r.i8();
@@ -68,8 +78,14 @@ function readValue(r: Reader, type: number): GgufValue {
     case GgufValueType.ARRAY: {
       const sub = r.u32();
       const count = r.bounded(r.u64(), "array length");
+      if (count > MAX_ARRAY_ELEMENTS) {
+        // bounded() only rejects counts past the remaining bytes; a 1-byte-element array up to the
+        // 64 MiB read window still passes and would build tens of millions of boxed Numbers. No real
+        // metadata array (vocab/merges) is this large, so cap it to bound the allocation.
+        throw new GgufError(`GGUF array too large (${count} > ${MAX_ARRAY_ELEMENTS})`);
+      }
       const arr: GgufValue[] = [];
-      for (let i = 0; i < count; i++) arr.push(readValue(r, sub));
+      for (let i = 0; i < count; i++) arr.push(readValue(r, sub, depth + 1));
       return arr;
     }
     default:
@@ -105,7 +121,15 @@ export function parseGguf(bytes: Buffer): GgufHeader {
     const name = r.str();
     const nDims = r.bounded(r.u32(), "tensor dim count");
     const dims: number[] = [];
-    for (let d = 0; d < nDims; d++) dims.push(r.u64());
+    for (let d = 0; d < nDims; d++) {
+      // A dim is a logical axis size (not a byte count, so it may exceed `remaining`); reject only the
+      // values that poison param counting: non-safe-integer or absurdly large (real dims are < ~1e6).
+      const dim = r.u64();
+      if (!Number.isSafeInteger(dim) || dim < 0 || dim > MAX_TENSOR_DIM) {
+        throw new GgufError(`tensor '${name}' dim ${dim} out of range`);
+      }
+      dims.push(dim);
+    }
     const type = r.u32();
     r.u64(); // tensor data offset — unused for metadata / param counting
     tensors.push({ name, dims, type });

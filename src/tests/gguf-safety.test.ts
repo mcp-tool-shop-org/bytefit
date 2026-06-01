@@ -51,3 +51,27 @@ test("absurd string length is rejected", () => {
 test("a non-GGUF buffer throws a structured GgufError, not a raw crash", () => {
   assert.throws(() => parseGguf(Buffer.from("definitely not a gguf file")), isGgufError);
 });
+
+test("deeply-nested arrays throw GgufError (depth cap), not a RangeError stack overflow", () => {
+  // A COMPLETE, terminating nested-array value 69 deep: an uncapped parser would parse it fine; the
+  // depth cap must turn it into a structured GgufError (the real attack uses 200k levels to crash).
+  const parts: Buffer[] = [u32(GGUF_MAGIC), u32(3), u64(0n) /*tensors*/, u64(1n) /*kv*/, gstr("nested"), u32(GgufValueType.ARRAY)];
+  for (let i = 0; i < 69; i++) parts.push(u32(GgufValueType.ARRAY), u64(1n)); // each level: an array holding 1 array
+  parts.push(u32(GgufValueType.UINT8), u64(0n)); // terminal empty array
+  assert.throws(() => parseGguf(Buffer.concat(parts)), isGgufError);
+});
+
+test("an absurd tensor dimension is rejected, not turned into a poisoned param count", () => {
+  const buf = Buffer.concat([
+    u32(GGUF_MAGIC),
+    u32(3),
+    u64(1n), // tensorCount = 1
+    u64(0n), // kvCount = 0
+    gstr("blk.0.weight"),
+    u32(1), // nDims = 1
+    u64(2n ** 40n), // dim = 2^40 — beyond MAX_TENSOR_DIM, would overflow param counting
+    u32(0), // ggml type
+    u64(0n), // data offset
+  ]);
+  assert.throws(() => parseGguf(buf), isGgufError);
+});
