@@ -37,9 +37,10 @@ bytefit plan qwen3.6:27b     # a full loadout + ready-to-run llama.cpp / Ollama 
 $ bytefit recommend
 NVIDIA GeForce RTX 5090 / 31.8 GiB VRAM / 63.4 GiB RAM — 10 models, 10 runnable:
 
+  qwen3.6:35b-a3b     FITS      Q4_K_M q8_0 ctx8192  ~132 tok/s  [vram]
   mistral-small:24b   FITS      Q4_K_M q8_0 ctx8192  ~84 tok/s  [vram]
-  qwen3.6:27b         FITS      Q4_K_M q8_0 ctx8192  ~54 tok/s  [vram]
-  qwen3.6:35b-a3b     DEGRADED  Q4_K_M q8_0 ctx8192  ~21 tok/s  [vram+ram]
+  qwen3.6:27b         FITS      Q4_K_M q8_0 ctx8192  ~74 tok/s  [vram]
+  gemma4:31b          FITS      Q4_K_M q8_0 ctx8192  ~60 tok/s  [vram]
   ...
 ```
 

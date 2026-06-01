@@ -37,9 +37,10 @@ bytefit recommend
 ```
 NVIDIA GeForce RTX 5090 / 31.8 GiB VRAM / 63.4 GiB RAM — 10 models, 10 runnable:
 
+  qwen3.6:35b-a3b     FITS      Q4_K_M q8_0 ctx8192  ~132 tok/s  [vram]
   mistral-small:24b   FITS      Q4_K_M q8_0 ctx8192  ~84 tok/s  [vram]
-  qwen3.6:27b         FITS      Q4_K_M q8_0 ctx8192  ~54 tok/s  [vram]
-  qwen3.6:35b-a3b     DEGRADED  Q4_K_M q8_0 ctx8192  ~21 tok/s  [vram+ram]
+  qwen3.6:27b         FITS      Q4_K_M q8_0 ctx8192  ~74 tok/s  [vram]
+  gemma4:31b          FITS      Q4_K_M q8_0 ctx8192  ~60 tok/s  [vram]
 ```
 
 Each row is a **loadout**: the verdict (`FITS` / `DEGRADED` / `REFUSED`), the chosen quant and
@@ -55,13 +56,13 @@ bytefit plan qwen3.6:27b
 `plan` prints the reasoning trace and the exact command to launch it:
 
 ```
-qwen3.6:27b: FITS Q4_K_M q8_0 ctx8192 ~54 tok/s
-  - Usable 27.4 GiB VRAM + 44.8 GiB RAM after headroom; KV 2.5 GiB (q8_0, 8192 ctx).
-  - Quant Q4_K_M: 17.2 GiB weights.
-  - Fits fully in VRAM. ~54 tok/s.
+qwen3.6:27b: FITS Q4_K_M q8_0 ctx8192 ~74 tok/s
+  - Usable 27.0 GiB VRAM + 43.1 GiB RAM after headroom; KV 0.3 GiB (q8_0, 8192 ctx).
+  - Quant Q4_K_M: 16.2 GiB weights.
+  - Fits fully in VRAM. ~74 tok/s.
 
 llama.cpp:
-  llama-server -m <model.gguf> -c 8192 -ngl 48 -ctk q8_0 -ctv q8_0 -fa on
+  llama-server -m <model.gguf> -c 8192 -ngl 64 -ctk q8_0 -ctv q8_0 -fa on
 ```
 
 Pick a backend with `--backend ollama` or `--backend lmstudio`, change the context with `--ctx`, or
