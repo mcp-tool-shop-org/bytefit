@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { plan, recommend } from "../index.js";
-import { weak, omen, qwen14b, qwen30bA3b, deepseekR1 } from "./fixtures.js";
+import { weak, omen, qwen14b, qwen30bA3b, deepseekR1, qwen3Next80b, highRamConsumer } from "./fixtures.js";
 
 test("14B on a 12GB/16GB box fits in VRAM at a sane quant", () => {
   const lo = plan({ hardware: weak, model: qwen14b, options: { useCase: "chat" } });
@@ -27,6 +27,15 @@ test("DeepSeek-class streams from disk only when experimentalDisk is set", () =>
 test("30B-A3B runs on the weak box (the MoE stretch target)", () => {
   const lo = plan({ hardware: weak, model: qwen30bA3b, options: { useCase: "chat" } });
   assert.notEqual(lo.verdict, "refused");
+  assert.ok((lo.predictedTokensPerSec ?? 0) > 0);
+});
+
+test("P0 regression: Qwen3-Next-80B-A3B at 4-bit is NOT refused on a 64 GB consumer box", () => {
+  // It's ~46 GB at 4-bit (not the ~320 GB FP32 figure) with ~3 B active/token — must run, not refuse.
+  const lo = plan({ hardware: highRamConsumer, model: qwen3Next80b, options: { useCase: "chat" } });
+  assert.notEqual(lo.verdict, "refused");
+  assert.equal(lo.quant, "Q4_K_M");
+  assert.equal(lo.placement?.tier, "vram+ram");
   assert.ok((lo.predictedTokensPerSec ?? 0) > 0);
 });
 

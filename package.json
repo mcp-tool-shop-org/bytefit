@@ -16,7 +16,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "verify": "tsc --noEmit && node --test dist/tests/*.test.js",
+    "verify": "tsc && node --test dist/tests/*.test.js",
     "test": "node --test dist/tests/*.test.js",
     "test:coverage": "c8 --reporter=lcov --reporter=text node --test dist/tests/*.test.js",
     "prepublishOnly": "npm run build"

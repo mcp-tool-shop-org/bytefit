@@ -51,6 +51,35 @@ export const qwen30bA3b: ModelMeta = {
   ],
 };
 
+/**
+ * Qwen3-Next-80B-A3B: a big MoE that is consumer-runnable at 4-bit (~46 GB, Unsloth) with only
+ * ~3 B params active/token — the P0 regression: it must NOT be refused on a high-RAM consumer box.
+ */
+export const qwen3Next80b: ModelMeta = {
+  id: "qwen3-next-80b-a3b",
+  totalParams: 80e9,
+  activatedParams: 3e9,
+  isMoE: true,
+  expertCount: 512,
+  activeExperts: 10,
+  arch: { layers: 48, kvHeads: 2, headDim: 128 },
+  builds: [
+    { quant: "Q8_0", sizeBytes: 85 * GiB },
+    { quant: "Q4_K_M", sizeBytes: 46 * GiB },
+  ],
+};
+
+/** A high-RAM consumer box: a modest 16 GB GPU + 64 GB system RAM. */
+export const highRamConsumer: Hardware = {
+  vramBytes: 16 * GiB,
+  vramFreeBytes: 15 * GiB,
+  vramBandwidthBytesPerSec: 720 * GB,
+  ramBytes: 64 * GiB,
+  ramFreeBytes: 56 * GiB,
+  ramBandwidthBytesPerSec: 80 * GB,
+  nvmeReadBytesPerSec: 3 * GB,
+};
+
 /** DeepSeek-R1-class: a huge MoE that wants server RAM — exercises the RAM wall. */
 export const deepseekR1: ModelMeta = {
   id: "deepseek-r1",
