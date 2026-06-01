@@ -40,6 +40,39 @@ test("present head_count_kv (real GQA) is used and NOT flagged assumed", () => {
   assert.equal(info.kvHeadsAssumed ?? false, false, "no assumption flag when present");
 });
 
+test("per-layer ARRAY head_count_kv → effective kvHeads (sum/layers), NOT a no-GQA fallback", () => {
+  // Qwen3-MoE/Next style: a per-layer array where 0 = a linear-attention layer that caches no KV.
+  const info = ggufModelInfoFromMetadata(
+    md({
+      "general.architecture": "qwen35moe",
+      "general.file_type": 15,
+      "qwen35moe.block_count": 8,
+      "qwen35moe.attention.head_count": 16,
+      "qwen35moe.attention.head_count_kv": [0, 0, 0, 2, 0, 0, 0, 2],
+      "qwen35moe.attention.key_length": 256,
+    }),
+  );
+  assert.equal(info.kvHeadsAssumed ?? false, false, "an array IS real GQA data, not an assumption");
+  assert.equal(info.kvHeads, 4 / 8, "effective kvHeads = per-layer sum (4) / layers (8) = 0.5");
+});
+
+test("sliding_window is surfaced so the full-context KV is flagged a conservative upper bound", () => {
+  const info = ggufModelInfoFromMetadata(
+    md({
+      "general.architecture": "gemma4",
+      "general.file_type": 15,
+      "gemma4.block_count": 6,
+      "gemma4.attention.head_count": 32,
+      "gemma4.attention.head_count_kv": [16, 16, 16, 16, 16, 4],
+      "gemma4.attention.key_length": 512,
+      "gemma4.attention.sliding_window": 1024,
+    }),
+  );
+  assert.equal(info.kvHeads, (16 * 5 + 4) / 6, "effective kvHeads from the per-layer array");
+  assert.equal(info.slidingWindow, 1024, "sliding window surfaced for the KV caveat");
+  assert.equal(info.kvHeadsAssumed ?? false, false);
+});
+
 test("kvHeadsAssumed propagates into ModelMeta.arch", () => {
   const info = ggufModelInfoFromMetadata(
     md({

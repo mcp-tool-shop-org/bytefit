@@ -79,6 +79,11 @@ export function plan(req: PlanRequest): Loadout {
       `KV is an upper bound — this GGUF omits ${omitted.join(" and ")}; actual KV may be smaller, so a faster tier could fit.`,
     );
   }
+  if (model.arch.slidingWindow) {
+    reasoning.push(
+      `Sliding-window attention (window ${model.arch.slidingWindow}) caps KV on most layers — bytefit models full context (a conservative upper bound), so actual KV is smaller and a faster tier may fit.`,
+    );
+  }
 
   // Quant selection: fast lane first (best quant that fits VRAM), then offload (VRAM+RAM).
   // Reasoning honors the Q4_K_M floor before any degraded low-bit fallback.

@@ -37,6 +37,8 @@ export interface GgufModelInfo {
   totalParams?: number;
   activatedParams?: number;
   sizeLabel?: string;
+  /** Local-attention window (tokens) when the arch interleaves sliding-window layers (Gemma-class). */
+  slidingWindow?: number;
 }
 
 function asNumber(v: GgufValue | undefined): number | undefined {
@@ -44,6 +46,31 @@ function asNumber(v: GgufValue | undefined): number | undefined {
 }
 function asString(v: GgufValue | undefined): string | undefined {
   return typeof v === "string" ? v : undefined;
+}
+
+/**
+ * Resolve KV heads from `head_count_kv`, which modern GGUFs store as a PER-LAYER ARRAY (Gemma3/4,
+ * Qwen3-MoE/Next), not a scalar — e.g. `[0,0,0,2,…]` (linear/full-attention hybrid; 0 = no-KV linear
+ * layer) or `[16,…,4,…]` (local/global interleave). The old `asNumber` treated an array as ABSENT and
+ * fell back to no-GQA (`kvHeads = head_count`), over-estimating KV by up to ~30×. Use an effective
+ * kvHeads = (per-layer sum / layers), so `2·layers·kvHeads·headDim` recovers the true summed KV (exact
+ * for non-sliding GQA). Only a truly-absent / all-zero field falls back to the no-GQA upper bound.
+ */
+function resolveKvHeads(
+  field: GgufValue | undefined,
+  headCount: number | undefined,
+  layers: number | undefined,
+): { kvHeads: number | undefined; assumed: boolean } {
+  if (typeof field === "number") return { kvHeads: field, assumed: false };
+  if (Array.isArray(field)) {
+    const nums = field.filter((x): x is number => typeof x === "number");
+    if (nums.length > 0) {
+      const denom = layers && layers > 0 ? layers : nums.length;
+      const eff = nums.reduce((a, b) => a + b, 0) / denom;
+      if (eff > 0) return { kvHeads: eff, assumed: false };
+    }
+  }
+  return { kvHeads: headCount, assumed: headCount !== undefined };
 }
 
 /** Parse "7B" / "30.5B" / "671B" / "1.5T" size labels into a parameter count. */
@@ -68,11 +95,12 @@ export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: G
   const g = (suffix: string): GgufValue | undefined => (arch ? md.get(`${arch}.${suffix}`) : undefined);
 
   const headCount = asNumber(g("attention.head_count"));
-  // Some GGUFs (e.g. Gemma builds) omit head_count_kv. Falling back to head_count assumes NO GQA,
-  // which is the largest-KV (paging-safe) guess — but flag it so callers can say "KV upper bound".
-  const kvHeadsRaw = asNumber(g("attention.head_count_kv"));
-  const kvHeads = kvHeadsRaw ?? headCount;
-  const kvHeadsAssumed = kvHeadsRaw === undefined && headCount !== undefined;
+  const layers = asNumber(g("block_count"));
+  // head_count_kv may be a scalar OR a per-layer array (Gemma3/4, Qwen3-MoE/Next). Resolve an effective
+  // kvHeads; only a truly-absent field falls back to the no-GQA (largest-KV, paging-safe) upper bound.
+  const kv = resolveKvHeads(g("attention.head_count_kv"), headCount, layers);
+  const kvHeads = kv.kvHeads;
+  const kvHeadsAssumed = kv.assumed;
   const keyLength = asNumber(g("attention.key_length"));
   const embeddingLength = asNumber(g("embedding_length"));
   const headDim =
@@ -93,7 +121,7 @@ export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: G
 
   return {
     architecture: arch,
-    layers: asNumber(g("block_count")),
+    layers,
     headCount,
     kvHeads,
     kvHeadsAssumed,
@@ -101,6 +129,7 @@ export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: G
     headDimAssumed,
     embeddingLength,
     contextLength: asNumber(g("context_length")),
+    slidingWindow: asNumber(g("attention.sliding_window")),
     isMoE: expertCount > 0,
     expertCount,
     activeExperts: asNumber(g("expert_used_count")),
