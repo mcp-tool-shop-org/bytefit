@@ -25,8 +25,14 @@ tok/s ≈ (memory_bandwidth × efficiency) ÷ bytes-read-per-token
 ```
 
 Real decode realizes only ~60–80% of the rated-bandwidth ceiling once KV reads, attention, sampling,
-and kernel-launch overhead are included, so bytefit applies an efficiency factor (≈ 0.7) rather than
-quoting an optimistic theoretical number.
+and kernel-launch overhead are included, so bytefit applies an efficiency factor (≈ 0.7, confirmed
+within ~3% by measurement on an RTX 5090) rather than quoting an optimistic theoretical number.
+
+For Mixture-of-Experts models the batch-of-one expert gather is far less bandwidth-efficient than dense
+streaming (scattered, non-contiguous reads plus a fixed per-token overhead), so bytefit applies a lower,
+**active-byte-dependent MoE efficiency** that rises with the active footprint. Without it the roofline
+badly over-promises: a 36B / 3.6B-active model measured **137 tok/s** on a 5090 where the dense formula
+predicted ~490.
 
 ## 3. Quant selection
 
@@ -38,9 +44,12 @@ sub-4-bit quant, and keeps a `Q4_K_M` floor for reasoning tasks (`--use-case rea
 ## 4. KV cache
 
 The default is `q8_0` — near-lossless and roughly half the size of f16. `q4_0` (about a third) is used
-only when long context is the explicit goal. When a GGUF omits its grouped-query-attention metadata,
-bytefit assumes the worst case (no GQA) but labels the KV estimate an **upper bound**, so the model may
-fit a faster tier than the conservative number suggests.
+only when long context is the explicit goal. bytefit reads grouped-query-attention metadata even when a
+GGUF stores it as a **per-layer array** (Qwen3-MoE/Next, Gemma), and models **sliding-window** attention
+correctly — Gemma-class models cache the full context only on their ~1/6 global layers, capping the rest
+at the local window, so a model that genuinely fits 32k is not falsely refused. When a GGUF omits the
+attention metadata entirely, bytefit falls back to the worst case and labels the KV estimate an
+**upper bound**, so the model may fit a faster tier than the conservative number suggests.
 
 ## 5. Placement and admission — the core guard
 
