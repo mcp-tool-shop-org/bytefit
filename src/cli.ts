@@ -99,7 +99,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === "probe") {
-    const hw = await probe();
+    const hw = await probe({ measureDisk: flags.experimental === true });
     if (json) return console.log(JSON.stringify(hw, null, 2)), 0;
     console.log(`${hw.gpu.name}  ${gi(hw.vramBytes)} GiB VRAM (${gi(hw.vramFreeBytes)} free) @ ${gbps(hw.vramBandwidthBytesPerSec)} GB/s`);
     console.log(`RAM  ${gi(hw.ramBytes)} GiB (${gi(hw.ramFreeBytes)} free) @ ${(hw.ramBandwidthBytesPerSec / 1e9).toFixed(1)} GB/s`);
@@ -109,7 +109,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === "recommend") {
-    const hw = await probe();
+    const hw = await probe({ measureDisk: flags.experimental === true });
     const cat = await gatherCatalog(flags);
     const recs = recommend(hw, cat.map((e) => e.model), planOptions(flags));
     if (json) return console.log(JSON.stringify(recs.map((r) => r.loadout), null, 2)), 0;
@@ -137,7 +137,7 @@ async function main(): Promise<number> {
       console.error(`unknown backend '${backendArg}' (use: ${valid.join(" | ")})`);
       return 2;
     }
-    const hw = await probe();
+    const hw = await probe({ measureDisk: flags.experimental === true });
     const cat = await gatherCatalog(flags);
     // Deterministic resolution: exact id wins; otherwise a prefix must be UNIQUE (no arbitrary pick).
     const exact = cat.find((e) => e.id === id);

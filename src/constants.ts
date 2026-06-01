@@ -105,6 +105,14 @@ export const MOE_DECODE_EFFICIENCY = 0.18;
  */
 export const NVME_RANDOM_ACCESS_DISCOUNT = 4;
 
+/**
+ * Cap on the effective-random NVMe read the disk benchmark may report (post-discount). The portable
+ * Node benchmark reads back a file it just wrote, so the OS page cache inflates the raw figure — treat
+ * it as an optimistic upper bound and never let the experimental disk tier admit on an impossibly-fast
+ * disk. ~2 GB/s effective-random is already generous for consumer PCIe4/5 NVMe (4K-random is often <1).
+ */
+export const NVME_EFFECTIVE_RANDOM_CEILING_BYTES_PER_SEC = 2 * GB;
+
 /** Below this, an interactive loadout is flagged as sluggish (informational only). */
 export const INTERACTIVE_MIN_TOK_PER_SEC = 5;
 

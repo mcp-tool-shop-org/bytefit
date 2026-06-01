@@ -2,6 +2,13 @@ import type { Confidence } from "./types.js";
 
 const GBPS = 1_000_000_000;
 
+/**
+ * Bandwidth assumed for an NVIDIA/AMD GPU not in the tables. A deliberately PESSIMISTIC floor — below
+ * the lowest listed card (rtx 4060 = 272 GB/s) — so an unlisted GPU produces a conservative tok/s and
+ * the tool errs toward refusing, never toward over-promising on a card whose real bandwidth is unknown.
+ */
+const UNKNOWN_GPU_BANDWIDTH_GBPS = 200;
+
 /** NVIDIA GPU memory bandwidth (GB/s), matched by case-insensitive name substring (TechPowerUp). */
 const NVIDIA_BANDWIDTH_GBPS: Array<[string, number]> = [
   ["rtx 5090", 1792],
@@ -62,7 +69,7 @@ export function nvidiaBandwidth(name: string): { bytesPerSec: number; confidence
   const gbps = lookup(NVIDIA_BANDWIDTH_GBPS, name);
   return gbps !== undefined
     ? { bytesPerSec: gbps * GBPS, confidence: "estimated" }
-    : { bytesPerSec: 360 * GBPS, confidence: "unknown" }; // conservative GDDR6-class floor
+    : { bytesPerSec: UNKNOWN_GPU_BANDWIDTH_GBPS * GBPS, confidence: "unknown" };
 }
 
 export function appleBandwidth(chip: string): { bytesPerSec: number; confidence: Confidence } {

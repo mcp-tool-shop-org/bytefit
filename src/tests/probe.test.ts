@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  probe,
   parseNvidiaSmiCsv,
   pickPrimaryGpu,
   parseMemInfo,
@@ -70,4 +71,21 @@ test("parseNvidiaSmiCsv / pickPrimaryGpu degrade gracefully on empty or garbage 
   assert.equal(parseNvidiaSmiCsv("\n\n   \n").length, 0);
   assert.equal(parseNvidiaSmiCsv("garbage without commas").length, 0);
   assert.equal(pickPrimaryGpu(parseNvidiaSmiCsv("")), undefined);
+});
+
+test("unknown GPU bandwidth is a real conservative floor (<= the lowest listed card)", () => {
+  const unknown = nvidiaBandwidth("Some Unlisted GPU 9000").bytesPerSec;
+  // every listed card must be >= the unknown fallback, so an unlisted card never over-predicts tok/s
+  for (const name of ["RTX 4060", "RTX 3060", "RTX 5090", "A100"]) {
+    assert.ok(nvidiaBandwidth(name).bytesPerSec >= unknown, `${name} must be >= the unknown floor`);
+  }
+  assert.ok(unknown <= 272e9, "unknown floor must be <= the lowest listed card (rtx 4060 = 272 GB/s)");
+});
+
+test("disk benchmark is capped + labeled estimated, never trusts the page cache as 'measured'", async () => {
+  const r = await probe({ measureDisk: true });
+  assert.notEqual(r.nvmeConfidence, "measured");
+  if (r.nvmeReadBytesPerSec !== undefined) {
+    assert.ok(r.nvmeReadBytesPerSec <= 2e9, `nvme effective must be capped, got ${r.nvmeReadBytesPerSec}`);
+  }
 });

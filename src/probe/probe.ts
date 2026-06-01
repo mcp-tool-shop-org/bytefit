@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { readFile, open, rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { Hardware } from "../types.js";
-import { MiB, NVME_RANDOM_ACCESS_DISCOUNT } from "../constants.js";
+import { MiB, NVME_RANDOM_ACCESS_DISCOUNT, NVME_EFFECTIVE_RANDOM_CEILING_BYTES_PER_SEC } from "../constants.js";
 import type { GpuInfo, RamInfo, ProbeResult, ProbeOptions, Confidence } from "./types.js";
 import { nvidiaBandwidth, appleBandwidth } from "./gpu-tables.js";
 import {
@@ -88,7 +88,7 @@ export async function probeGpu(): Promise<GpuInfo> {
         name: "AMD GPU (sysfs)",
         vramTotalBytes: total,
         vramFreeBytes: Math.max(0, free),
-        bandwidthBytesPerSec: 360 * 1_000_000_000,
+        bandwidthBytesPerSec: 200 * 1_000_000_000, // no AMD bandwidth table yet — err low so an unlisted card never over-predicts
         bandwidthConfidence: "unknown",
       };
     }
@@ -160,9 +160,16 @@ async function probeNvme(opts: ProbeOptions): Promise<{ bytesPerSec?: number; co
     }
     await rfh.close();
     const seconds = Number(process.hrtime.bigint() - start) / 1e9;
-    // SPEC §3.1: random expert-access reads run ~3–6× below sequential; discount the sequential
-    // measurement to a conservative effective-random figure for the (experimental) disk tier.
-    return { bytesPerSec: read / seconds / NVME_RANDOM_ACCESS_DISCOUNT, confidence: "measured" };
+    // SPEC §3.1: random expert-access reads run ~3–6× below sequential; discount the sequential read.
+    // Critically, a portable Node read can't bypass the OS page cache (the 64 MiB we just wrote is still
+    // resident), so the raw figure over-reads vs the device — cap it at a conservative effective-random
+    // ceiling and label it "estimated", never "measured" (the disk-tier admission must not trust a
+    // cache-served number as a measured fact).
+    const effective = Math.min(
+      read / seconds / NVME_RANDOM_ACCESS_DISCOUNT,
+      NVME_EFFECTIVE_RANDOM_CEILING_BYTES_PER_SEC,
+    );
+    return { bytesPerSec: effective, confidence: "estimated" };
   } catch {
     return { confidence: "unknown" };
   } finally {
