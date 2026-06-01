@@ -39,6 +39,8 @@ export interface GgufModelInfo {
   sizeLabel?: string;
   /** Local-attention window (tokens) when the arch interleaves sliding-window layers (Gemma-class). */
   slidingWindow?: number;
+  /** Number of GLOBAL (full-context) layers when sliding-window is present; the rest cap KV at the window. */
+  slidingWindowGlobalLayers?: number;
 }
 
 function asNumber(v: GgufValue | undefined): number | undefined {
@@ -70,12 +72,41 @@ function resolveKvHeads(
   if (Array.isArray(field)) {
     const nums = field.filter((x): x is number => typeof x === "number");
     if (nums.length > 0) {
+      // A well-formed per-layer array has exactly `layers` entries. If it's shorter (malformed/adversarial
+      // GGUF via --hf), dividing the partial sum by the full layer count UNDER-counts KV (the unsafe
+      // direction for an anti-paging tool) — fall back to the no-GQA upper bound instead.
+      if (layers && layers > 0 && nums.length !== layers) {
+        return { kvHeads: headCount, assumed: headCount !== undefined };
+      }
       const denom = layers && layers > 0 ? layers : nums.length;
       const eff = nums.reduce((a, b) => a + b, 0) / denom;
       if (eff > 0) return { kvHeads: eff, assumed: false };
     }
   }
   return { kvHeads: headCount, assumed: headCount !== undefined };
+}
+
+/**
+ * Resolve sliding-window attention (Gemma-class): the window size + how many layers are GLOBAL (cache
+ * full context). GGUFs store `sliding_window_pattern` as a per-layer boolean array (true = local/sliding,
+ * false = global/full); a scalar N means the HF rule (layer i is global iff (i+1) % N == 0). Absent ⇒
+ * the Gemma default of 6 (5 local : 1 global). Returns {} when there is no sliding window.
+ */
+function resolveSlidingWindow(
+  window: number | undefined,
+  patternField: GgufValue | undefined,
+  layers: number | undefined,
+): { slidingWindow?: number; slidingWindowGlobalLayers?: number } {
+  if (!window || window <= 0 || !layers || layers <= 0) return {};
+  let globalLayers: number;
+  if (Array.isArray(patternField)) {
+    globalLayers = patternField.filter((x) => x === false).length; // false = global / full-context layer
+  } else if (typeof patternField === "number" && patternField > 0) {
+    globalLayers = Math.floor(layers / patternField);
+  } else {
+    globalLayers = Math.floor(layers / 6);
+  }
+  return { slidingWindow: window, slidingWindowGlobalLayers: globalLayers };
 }
 
 /** Parse "7B" / "30.5B" / "671B" / "1.5T" size labels into a parameter count. */
@@ -134,7 +165,7 @@ export function ggufModelInfoFromMetadata(md: Map<string, GgufValue>, tensors: G
     headDimAssumed,
     embeddingLength,
     contextLength: asNumber(g("context_length")),
-    slidingWindow: asNumber(g("attention.sliding_window")),
+    ...resolveSlidingWindow(asNumber(g("attention.sliding_window")), g("attention.sliding_window_pattern"), layers),
     isMoE: expertCount > 0,
     expertCount,
     activeExperts: asNumber(g("expert_used_count")),

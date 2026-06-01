@@ -80,7 +80,7 @@ export function plan(req: PlanRequest): Loadout {
   }
   if (model.arch.slidingWindow) {
     reasoning.push(
-      `Sliding-window attention (window ${model.arch.slidingWindow}) caps KV on most layers — bytefit models full context (a conservative upper bound), so actual KV is smaller and a faster tier may fit.`,
+      `Sliding-window attention: ${model.arch.slidingWindowGlobalLayers ?? "?"}/${model.arch.layers} layers cache full context, the rest cap KV at the ${model.arch.slidingWindow}-token window (modeled).`,
     );
   }
 

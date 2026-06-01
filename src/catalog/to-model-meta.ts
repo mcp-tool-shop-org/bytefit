@@ -29,6 +29,7 @@ export function toModelMeta(
       ...(info.kvHeadsAssumed ? { kvHeadsAssumed: true } : {}),
       ...(info.headDimAssumed ? { headDimAssumed: true } : {}),
       ...(info.slidingWindow !== undefined ? { slidingWindow: info.slidingWindow } : {}),
+      ...(info.slidingWindowGlobalLayers !== undefined ? { slidingWindowGlobalLayers: info.slidingWindowGlobalLayers } : {}),
     },
     builds: [{ quant, ...(opts.sizeBytes !== undefined ? { sizeBytes: opts.sizeBytes } : {}) }],
   };
