@@ -51,3 +51,15 @@ test("catalogFromHuggingFace returns [] for a repo with no GGUFs", async () => {
     new Response(JSON.stringify([{ type: "file", path: "config.json", size: 100 }]), { status: 200 })) as unknown as typeof fetch;
   assert.deepEqual(await catalogFromHuggingFace("org/no-gguf", { fetchImpl }), []);
 });
+
+test("catalogFromHuggingFace refuses a server that ignores Range and returns a full body (no OOM)", async () => {
+  // A CDN/proxy may answer a Range request with 200 + the FULL multi-GB file; buffering it would OOM.
+  const fetchImpl = (async (url: string) => {
+    if (url.includes("/api/models/")) {
+      return new Response(JSON.stringify([{ type: "file", path: "model-Q4_K_M.gguf", size: 9_000_000_000 }]), { status: 200 });
+    }
+    // Status 200 (not 206) with a >MAX_RANGE Content-Length — the header read must refuse, not buffer.
+    return new Response(new Uint8Array(17 << 20), { status: 200 });
+  }) as unknown as typeof fetch;
+  assert.deepEqual(await catalogFromHuggingFace("org/ignores-range", { fetchImpl }), []);
+});

@@ -16,17 +16,30 @@ import {
 
 type Flags = Record<string, string | boolean>;
 
+/** Flags that never take a value (so they can't swallow the following positional, e.g. the model id). */
+const BOOLEAN_FLAGS = new Set(["json", "experimental", "help", "h"]);
+/** Flags that always consume the next token as their value (even one starting with "-", e.g. `--ctx -5`). */
+const VALUE_FLAGS = new Set(["dir", "hf", "ctx", "use-case", "backend"]);
+
 function parseArgs(argv: string[]): { cmd: string; positional: string[]; flags: Flags } {
   const flags: Flags = {};
   const positional: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === undefined) continue;
+    if (a === "-h" || a === "-help") {
+      flags.help = true; // short help flag (parseArgs only special-cased --double-dash before, so -h fell through to positional)
+      continue;
+    }
     if (a.startsWith("--")) {
       const key = a.slice(2);
       const next = argv[i + 1];
-      if (next !== undefined && !next.startsWith("--")) {
-        flags[key] = next;
+      // A boolean flag NEVER consumes the next token; a value flag always does; an unknown flag uses the
+      // heuristic (consume unless the next token looks like another flag). This stops `plan --json <model>`
+      // from swallowing the model id into `flags.json`.
+      const takesValue = next !== undefined && !BOOLEAN_FLAGS.has(key) && (VALUE_FLAGS.has(key) || !next.startsWith("-"));
+      if (takesValue) {
+        flags[key] = next as string;
         i++;
       } else {
         flags[key] = true;
