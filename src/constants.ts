@@ -65,6 +65,17 @@ export const DEFAULT_CONTEXT_LENGTH = 8192;
 export const DEFAULT_VRAM_HEADROOM_BYTES = 1536 * MiB;
 export const DEFAULT_RAM_HEADROOM_BYTES = 2 * GiB;
 
+/**
+ * Effective fraction of rated memory bandwidth realized during single-stream (batch=1) decode.
+ * Decode is memory-bandwidth-bound, but real llama.cpp / Ollama / vLLM decode lands at ~60–80% of
+ * the bandwidth roofline once KV reads, attention, sampling, and kernel-launch overhead are
+ * included; raw STREAM bandwidth itself tops out ~85% of spec. Default 0.7 (overridable per call).
+ * Omitting this factor makes predicted tok/s ~20–40% optimistic — the advisor's worst failure mode
+ * (a confident, wrong speed). Refs: Yuan 2024 (arXiv:2402.16363), Imai 2024 (NeurIPS MLForSystems),
+ * llama.cpp discussion #4167. See docs/research-grounding.md finding 2.
+ */
+export const BANDWIDTH_EFFICIENCY = 0.7;
+
 /** Below this, an interactive loadout is flagged as sluggish (informational only). */
 export const INTERACTIVE_MIN_TOK_PER_SEC = 5;
 

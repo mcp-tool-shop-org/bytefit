@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { predictTokensPerSec, GB, type Hardware, type Placement } from "../index.js";
+import { predictTokensPerSec, GB, BANDWIDTH_EFFICIENCY, type Hardware, type Placement } from "../index.js";
 
 const hw: Hardware = {
   vramBytes: 0,
@@ -14,10 +14,24 @@ const hw: Hardware = {
 
 const approx = (a: number, b: number, tol = 0.01): boolean => Math.abs(a - b) <= tol * Math.abs(b);
 
-test("full-VRAM decode ≈ vramBw / (active + kv) bytes", () => {
+test("full-VRAM decode ≈ (vramBw·η) / (active + kv) bytes", () => {
   const p: Placement = { tier: "vram", activeVramBytes: 9 * GB, activeRamBytes: 0, activeDiskBytes: 0 };
   const tok = predictTokensPerSec(hw, p, 1 * GB);
-  assert.ok(approx(tok, (360 * GB) / (10 * GB)), `expected ~36, got ${tok}`);
+  const expected = (360 * GB * BANDWIDTH_EFFICIENCY) / (10 * GB);
+  assert.ok(approx(tok, expected), `expected ~${expected.toFixed(1)}, got ${tok}`);
+});
+
+test("efficiency override scales tok/s linearly", () => {
+  const p: Placement = { tier: "vram", activeVramBytes: 9 * GB, activeRamBytes: 0, activeDiskBytes: 0 };
+  const full = predictTokensPerSec(hw, p, 1 * GB, { efficiency: 1 });
+  const half = predictTokensPerSec(hw, p, 1 * GB, { efficiency: 0.5 });
+  assert.ok(approx(half, full * 0.5), `expected ${full * 0.5}, got ${half}`);
+});
+
+test("non-positive bandwidth yields 0, never NaN/Infinity", () => {
+  const bad: Hardware = { ...hw, vramBandwidthBytesPerSec: 0 };
+  const p: Placement = { tier: "vram", activeVramBytes: 1 * GB, activeRamBytes: 0, activeDiskBytes: 0 };
+  assert.equal(predictTokensPerSec(bad, p, 1 * GB), 0);
 });
 
 test("RAM offload is slower than the same active bytes in VRAM", () => {

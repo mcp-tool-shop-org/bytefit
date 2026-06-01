@@ -21,7 +21,12 @@ export function toModelMeta(
     isMoE: info.isMoE,
     expertCount: info.expertCount,
     activeExperts: info.activeExperts,
-    arch: { layers: info.layers, kvHeads: info.kvHeads, headDim: info.headDim },
+    arch: {
+      layers: info.layers,
+      kvHeads: info.kvHeads,
+      headDim: info.headDim,
+      ...(info.kvHeadsAssumed ? { kvHeadsAssumed: true } : {}),
+    },
     builds: [{ quant, ...(opts.sizeBytes !== undefined ? { sizeBytes: opts.sizeBytes } : {}) }],
   };
 }

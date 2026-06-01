@@ -47,6 +47,11 @@ export function plan(req: PlanRequest): Loadout {
   reasoning.push(
     `Usable ${fmtGiB(usableVram)} VRAM + ${fmtGiB(usableRam)} RAM after headroom; KV ${fmtGiB(kvTotal)} (${kvCacheType}, ${contextLength} ctx).`,
   );
+  if (model.arch.kvHeadsAssumed) {
+    reasoning.push(
+      `KV is an upper bound: this GGUF omits head_count_kv, so no-GQA is assumed (kvHeads=${model.arch.kvHeads}). A GQA model would use less KV and may reach a faster tier.`,
+    );
+  }
 
   // Quant selection: fast lane first (best quant that fits VRAM), then offload (VRAM+RAM).
   // Reasoning honors the Q4_K_M floor before any degraded low-bit fallback.

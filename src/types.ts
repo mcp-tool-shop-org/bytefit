@@ -45,6 +45,12 @@ export interface ModelArch {
   /** KV heads (= attention heads unless GQA/MQA reduces it). */
   kvHeads: number;
   headDim: number;
+  /**
+   * True when the GGUF omitted `head_count_kv` and kvHeads was assumed = head_count (no GQA).
+   * KV math is then an UPPER BOUND: a GQA model would use fewer KV heads and less cache.
+   * Kept conservative (paging-safe), but surfaced so the recommendation is honest about it.
+   */
+  kvHeadsAssumed?: boolean;
 }
 
 export interface ModelMeta {
