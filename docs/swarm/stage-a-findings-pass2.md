@@ -104,4 +104,50 @@
 
 - C1 MoE efficiency constant ← study #1 (batch=1-MoE / sparse-gather efficiency).
 - H1 sliding-window KV model ← study #3 (KV + compute-buffer context-scaling).
-- C3 NVMe random-access model ← study #2.
+- C3 NVMe random-access model ← study #4.
+
+---
+
+## Remediation log (Stage A pass 2 — all CRIT + HIGH addressed)
+
+Branch `dogfood-swarm-2`, 9 fix commits + 2 doc commits. **72 → 90 tests**, build clean, every fix
+live-validated on the RTX 5090. Final verdict pending the Phase-4 re-audit (`wf_1319473f-1d7`).
+
+| Wave | Commit | Findings closed | Live result |
+|---|---|---|---|
+| 1 | `82a8944` | C5/H2 ctx validation (cm-03, ce-02, ce-03) | `--ctx abc/-5/0` → exit 2 |
+| 2a | `dafd1fd` | C2 crushed-big-model (cm-01) | sub-4-bit big no longer outranks safe small |
+| 2b/3 | `7a9464b` | C1 MoE tok/s + C4 MoE -ngl (cm-05) | qwen3-a3b 490→132 (meas 136); -ngl 99 |
+| 4 | `0c694a7` | C3 NVMe page-cache + H6 GPU floor + disk reachability | NVMe capped+estimated; --experimental measures disk |
+| 5 | `ac84e1b` | H4/H5/M6 GGUF depth+dim+array bounds | depth/dim → GgufError; real models still parse |
+| 6 | (wave5) | H7 hf OOM + H8 parseArgs + -h | `plan --json <model>` keeps id; `-h` → help |
+| 7 | (drift) | H9 SPEC/README drift + M13 docs-drift guard | SPEC/README clean; guard test green |
+| 8 | (cli.test) | H10 CLI contract tests | exit codes 0/1/2 locked |
+| 9 | (emit/cli) | ce-05/ce-06/ce-08 + CAL-2 disclosure | recommend shows KV upper-bound caveat |
+| 10 | (kv-array) | **H1/CAL-2 head_count_kv ARRAY bug** | qwen3-a3b@32k KV 2.5GiB→0.3GiB FITS; gemma4@8k DEGRADED7→FITS48 |
+| 11 | (M4) | M4 asNumber numeric-string | — |
+
+### Triage corrections (verified against ground truth, not taken on faith)
+
+- **cm-02 (HIGH) REJECTED — over-claimed.** The agent said `BITS_PER_WEIGHT` 3-bit values are "inflated
+  15-29% → false refusals." Checked against the llama.cpp k-quants table: the values (Q3_K_L 4.27, Q2_K
+  3.35, …) ARE the canonical llama.cpp bits/weight column; the agent assumed smaller real sizes. No change
+  — the values are correct. (The Q3_K_L-classifies-safe sub-point is defensible at 4.27 effective bpw.)
+- **H1/CAL-2 EXPANDED — the real bug was bigger than the audit framed it.** A live GGUF-metadata dump
+  (`docs/swarm` diagnostic) proved the over-estimate is a **parsing bug**: modern GGUFs store
+  `head_count_kv` as a **per-layer array**, which `asNumber` dropped → no-GQA fallback (~30× KV over).
+  Fixed by parsing the array → effective kvHeads; the sliding-window remainder is the genuine study-#3 part.
+
+### Deferred to Stage B / study (MEDIUM, non-blocking)
+
+- cm-04 KV bytes-per-elem scale (1.0→1.0625, 0.5→0.5625; ripples into KV tests — Stage B).
+- cm-07 IQ2_M ranked below Q2_K (rank tweak; ripples into quant tests — Stage B).
+- M5 value_length≠key_length (MLA archs; mostly refused models — Stage B).
+- pc-05 nvidia-smi `[N/A]` free row; pc-06 Ollama daemon-down hint (CLI already hints) — Stage B.
+
+### Studies in flight (deliverable #2)
+
+5-question study research dispatched (`wf_3eea699c-c75`): moe-batch1-efficiency, q4_0-kv-latency,
+kv-context-sliding-window, nvme-random-access, spec-decode-gating. Each citation goes through the
+mandatory different-family verification pass (mistral-small:24b + granite4.1:30b via ollama-intern +
+WebFetch retrieval oracle) before locking into `docs/research-grounding.md`.
