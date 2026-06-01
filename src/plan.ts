@@ -15,9 +15,10 @@ import {
   VRAM_USABLE_FRACTION,
   RAM_USABLE_FRACTION,
   INTERACTIVE_MIN_TOK_PER_SEC,
+  REASONING_QUANT_FLOOR,
   fmtGiB,
 } from "./constants.js";
-import { selectQuant, smallestQuant, quantQualityRank, lowBitRisk, type QuantChoice } from "./quant.js";
+import { selectQuant, smallestQuant, quantQualityRank, lowBitRisk, bytesPerParam, type QuantChoice } from "./quant.js";
 import {
   kvBytesPerToken,
   kvBytesTotal as computeKvTotal,
@@ -235,7 +236,18 @@ export function recommend(
 function scoreLoadout(model: ModelMeta, loadout: Loadout, interactive: boolean): number {
   if (loadout.verdict === "refused") return -Infinity;
   let score = Math.log10(model.totalParams); // capability ~ scale of the model
-  if (loadout.quant) score += 0.3 * (quantQualityRank(loadout.quant) / 100);
+  if (loadout.quant) {
+    score += 0.3 * (quantQualityRank(loadout.quant) / 100);
+    // The "crushed big model" heuristic (more params at fewer bits wins per byte) holds ONLY down to
+    // 4-bit; below it the bigger model inverts (research-grounding #9 — Dettmers & Zettlemoyer 2022,
+    // arXiv:2212.09720: "do not recommend a 3-bit-bigger model over a 4-bit-smaller one"). Penalize a
+    // sub-4-bit pick hard enough that log10(params) can't carry a crushed bigger model over a safe
+    // higher-bit smaller one at comparable footprint.
+    if (bytesPerParam(loadout.quant) < 0.5) {
+      const deficitRank = Math.max(0, quantQualityRank(REASONING_QUANT_FLOOR) - quantQualityRank(loadout.quant));
+      score -= 0.5 + 0.4 * (deficitRank / 100);
+    }
+  }
   score += loadout.verdict === "fits" ? 0.2 : -0.15; // comfortable beats degraded
   if (interactive) {
     const t = loadout.predictedTokensPerSec ?? 0;

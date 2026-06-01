@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { plan, recommend } from "../index.js";
+import { plan, recommend, bytesPerParam, GiB, GB, type Hardware } from "../index.js";
 import { weak, omen, qwen14b, qwen30bA3b, deepseekR1, qwen3Next80b, highRamConsumer } from "./fixtures.js";
 
 test("14B on a 12GB/16GB box fits in VRAM at a sane quant", () => {
@@ -58,4 +58,24 @@ test("recommend ranks runnable models best-first and drops refused ones", () => 
   for (let i = 1; i < recs.length; i++) {
     assert.ok(recs[i - 1]!.capabilityScore >= recs[i]!.capabilityScore);
   }
+});
+
+test("research #9: a sub-4-bit bigger model never outranks a safe higher-bit smaller one", () => {
+  // A box where the 30B MoE only fits at a sub-4-bit quant but the 14B fits at a safe (>=4-bit) one.
+  const box: Hardware = {
+    vramBytes: 12 * GiB,
+    vramFreeBytes: 11 * GiB,
+    vramBandwidthBytesPerSec: 360 * GB,
+    ramBytes: 8 * GiB,
+    ramFreeBytes: 6.5 * GiB,
+    ramBandwidthBytesPerSec: 50 * GB,
+  };
+  const recs = recommend(box, [qwen30bA3b, qwen14b], { useCase: "chat" });
+  const big = recs.find((r) => r.loadout.modelId === "qwen3-30b-a3b");
+  const small = recs.find((r) => r.loadout.modelId === "qwen2.5-14b");
+  assert.ok(big && small, "both models should be runnable on this box");
+  // confirm the scenario actually exercises the inversion: the big model is forced sub-4-bit
+  assert.ok(big!.loadout.quant && bytesPerParam(big!.loadout.quant) < 0.5, `expected sub-4-bit big, got ${big!.loadout.quant}`);
+  // and the safe higher-bit smaller model must rank ahead of the crushed bigger one
+  assert.ok(small!.capabilityScore > big!.capabilityScore, "safe 14B must outrank the sub-4-bit 30B");
 });
