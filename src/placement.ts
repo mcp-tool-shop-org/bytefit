@@ -83,11 +83,17 @@ export function placeAndAdmit(
 
   // Case B — VRAM + RAM offload.
   if (overflow <= usableRam) {
+    // Partial MoE offload: put the experts of ~(overflow fraction) of layers on CPU. Omit when every
+    // layer's experts must leave the GPU — emit then uses a blanket -ot instead of --n-cpu-moe.
+    const cpuMoELayers = model.isMoE
+      ? Math.min(model.arch.layers, Math.max(1, Math.ceil(model.arch.layers * (overflow / weightTotal))))
+      : undefined;
     return {
       placement: {
         tier: "vram+ram",
         gpuLayers: Math.round(model.arch.layers * (vramWeightBytes / weightTotal)),
         cpuMoEExperts: model.isMoE,
+        ...(cpuMoELayers !== undefined && cpuMoELayers < model.arch.layers ? { cpuMoELayers } : {}),
         activeVramBytes: activeOn(vramWeightBytes),
         activeRamBytes: activeOn(overflow),
         activeDiskBytes: 0,

@@ -107,6 +107,12 @@ export interface Placement {
   gpuLayers?: number;
   /** For MoE: routed experts placed on CPU/RAM (and/or disk). */
   cpuMoEExperts?: boolean;
+  /**
+   * For MoE PARTIAL offload: the number of layers whose routed experts go to CPU (`--n-cpu-moe N`),
+   * keeping attention + shared weights on the GPU. Undefined when all experts are offloaded (emit
+   * falls back to `-ot ...=CPU`) or none are.
+   */
+  cpuMoELayers?: number;
   /** Active-path bytes resident on each tier (drives the roofline). */
   activeVramBytes: number;
   activeRamBytes: number;

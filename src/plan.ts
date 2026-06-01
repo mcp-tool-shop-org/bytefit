@@ -142,7 +142,9 @@ export function plan(req: PlanRequest): Loadout {
     reasoning.push(`Fits fully in VRAM. ~${predicted.toFixed(0)} tok/s.`);
   } else if (placed.placement.tier === "vram+ram") {
     reasoning.push(
-      `Offload: ${fmtGiB(placed.vramWeightBytes)} weights in VRAM, ${fmtGiB(placed.ramWeightBytes)} in RAM. ~${predicted.toFixed(0)} tok/s.`,
+      `Offload: ${fmtGiB(placed.vramWeightBytes)} weights in VRAM, ${fmtGiB(placed.ramWeightBytes)} in RAM` +
+        (placed.placement.cpuMoELayers ? `, ${placed.placement.cpuMoELayers} layers' experts on CPU` : "") +
+        `. ~${predicted.toFixed(0)} tok/s.`,
     );
   } else {
     reasoning.push(
