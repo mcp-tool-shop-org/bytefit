@@ -19,18 +19,17 @@ export function emitLlamaCpp(loadout: Loadout, opts: EmitOptions = {}): EmittedC
   if (p) {
     if (p.gpuLayers !== undefined) args.push("-ngl", String(p.gpuLayers));
     if (p.tier !== "vram") {
-      // Pin experts to CPU only in a genuine expert-offload regime. A small spillover is better
-      // expressed by the reduced -ngl above; a blanket -ot would force *all* experts off-GPU.
-      const ramFrac =
-        loadout.footprint && loadout.footprint.weightBytesTotal > 0
-          ? loadout.footprint.ramWeightBytes / loadout.footprint.weightBytesTotal
-          : 0;
-      if (p.cpuMoEExperts && ramFrac > 0.25) args.push("-ot", ".ffn_.*_exps.=CPU");
+      // MoE expert offload: a fractional `--n-cpu-moe N` (first N layers' experts on CPU) for a
+      // partial offload, or a blanket `-ot ...=CPU` when every layer's experts must leave the GPU
+      // (e.g. the streaming disk tier). Attention + shared weights stay on GPU via the -ngl above.
+      if (p.cpuMoELayers && p.cpuMoELayers > 0) args.push("--n-cpu-moe", String(p.cpuMoELayers));
+      else if (p.cpuMoEExperts) args.push("-ot", ".ffn_.*_exps.=CPU");
       args.push("--fit", "off"); // honor our explicit placement instead of the auto-fitter
       if (p.tier === "vram+ram") args.push("--mlock"); // keep the RAM-resident weights from paging
     }
   }
-  if (loadout.kvCacheType) args.push("-ctk", loadout.kvCacheType, "-ctv", loadout.kvCacheType);
+  // f16 is llama.cpp's default KV type — only emit -ctk/-ctv when we actually want a quantized cache.
+  if (loadout.kvCacheType && loadout.kvCacheType !== "f16") args.push("-ctk", loadout.kvCacheType, "-ctv", loadout.kvCacheType);
   args.push("-fa", "on");
 
   if (loadout.speculativeLane && loadout.speculativeLane !== "none") warnings.push(SPEC_HINT);

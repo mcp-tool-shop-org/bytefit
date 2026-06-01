@@ -2,6 +2,7 @@ export { probe, probeGpu, probeRam } from "./probe.js";
 export { nvidiaBandwidth, appleBandwidth } from "./gpu-tables.js";
 export {
   parseNvidiaSmiCsv,
+  pickPrimaryGpu,
   parseMemInfo,
   parseVmStat,
   parseWin32Memory,

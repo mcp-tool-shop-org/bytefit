@@ -8,10 +8,12 @@ export interface GpuInfo {
   vendor: GpuVendor;
   name: string;
   vramTotalBytes: number;
-  /** Free VRAM after the 0.90 fragmentation backoff (so it's a conservative usable figure). */
+  /** Honest free VRAM (raw nvidia-smi / sysfs). The usable backoff is applied later in usableBytes. */
   vramFreeBytes: number;
   bandwidthBytesPerSec: number;
   bandwidthConfidence: Confidence;
+  /** Optional advisory (e.g. multi-GPU: which card was chosen). Surfaced in ProbeResult.notes. */
+  note?: string;
 }
 
 export interface RamInfo {

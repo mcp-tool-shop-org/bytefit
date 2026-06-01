@@ -1,7 +1,7 @@
 # bytefit Specification
 
 > Hardware-aware local-LLM loadout planner.
-> Status: pre-release scaffold (v0.0.0). Architecture locked; implementation in progress.
+> Status: v1.0.0 — stable. Architecture locked; pure core + I/O shell + CLI shipped.
 
 ## 1. What bytefit is
 
@@ -74,12 +74,16 @@ If the model is MoE:
 - Emit a routing-consistency score; warn on shared-expert / sparse-interval models (Jamba-class).
 
 **Hard RAM-residency wall (verified — primary sources):** expert offload is bounded by *total
-RAM*, not VRAM. DeepSeek-V3/R1-class (671B) needs **~382 GB DRAM single-socket (1 TB
-dual-socket)** for KTransformers' headline speed; Qwen3-Next-80B-A3B needs **~320 GB system
-RAM + ~6 GB VRAM**. The ~13.7 tok/s figure is a **1 TB server-RAM** result; single-socket
-382 GB is ~10.3 tok/s. **There is no consumer-RAM path to those speeds.** Therefore bytefit
-**refuses** to recommend DeepSeek / Qwen3-Next-class on consumer RAM (≤128 GB); it does not
-silently route them to disk. (KTransformers tutorial; Unsloth R1-0528 / 1.58-bit guidance.)
+RAM*, not VRAM. DeepSeek-V3/R1-class (671B) genuinely needs **~382 GB DRAM single-socket (1 TB
+dual-socket)** for KTransformers' headline speed (the ~13.7 tok/s figure is a **1 TB server-RAM**
+result; single-socket 382 GB is ~10.3 tok/s) — **there is no consumer-RAM path**, so bytefit
+**refuses** it on consumer RAM (≤128 GB) rather than route it silently to disk. **Qwen3-Next-80B-A3B
+is NOT in that class:** it is ~160 GB BF16 native and **~46 GB at 4-bit** (Unsloth) with only ~3 B
+params active per token, so it **runs on a high-RAM consumer box (≥64 GB)** via MoE-experts-to-CPU
+offload — bytefit **recommends** it as a stretch pick, it does not refuse it. (An earlier "~320 GB"
+for it was an FP32 miscalc — corrected 2026-06-01 after primary-source verification against the Qwen
+model card + Unsloth Qwen3-Next docs.) The admission test keys on the **quant-adjusted** footprint,
+never the native/FP32 size. (KTransformers tutorial; Unsloth R1-0528 / Qwen3-Next guidance.)
 
 ### Step 2 — Quant selection
 - **Core heuristic:** prefer the crushed big model — accuracy-per-VRAM-byte favors more params
@@ -126,7 +130,7 @@ A **loadout**:
 ## 6. Hard constraints
 
 1. **Refuse, don't page.** No config that would tip into uncontrolled disk paging is ever recommended silently.
-2. **RAM wall.** DeepSeek / Qwen3-Next-class is refused on consumer RAM (≤128 GB) — server-RAM-only by published requirement (§4).
+2. **RAM wall.** A model is refused on consumer RAM (≤128 GB) only when its **quant-adjusted** footprint needs server-class RAM — DeepSeek-V3/R1-class (671B, ~382 GB–1 TB) is the canonical case. Qwen3-Next-80B-A3B is **not** refused: ~46 GB at 4-bit fits a high-RAM consumer box (§4).
 3. **Disk tier is experimental.** mmap demand-paging of MoE experts works *today* (llama.cpp
    default `--mmap`), but a persistent GPU expert cache is **not in mainline**
    ([llama.cpp#20757](https://github.com/ggml-org/llama.cpp/issues/20757), closed without a
@@ -185,7 +189,7 @@ Two sources: a 5-agent study-swarm (technique ceiling) and a primary-source veri
 | Claim class | Status |
 |---|---|
 | RAM-wall numbers (382 GB / 1 TB; Unsloth RAM-vs-tok/s) | CONFIRMED (primary) |
-| Qwen3-Next-80B-A3B requirement | REFINED → ~320 GB RAM / ~6 GB VRAM (was mis-stated as 256 / 24) |
+| Qwen3-Next-80B-A3B requirement | CORRECTED → ~160 GB BF16 / **~46 GB at 4-bit**, consumer-runnable (the ~320 GB figure was FP32). Primary: Qwen card + Unsloth |
 | Disk-streaming maturity (experimental) | CONFIRMED (roadmap + open issue) |
 | Competitive wedge open | CONFIRMED (matrix, primary) |
 | Qwen3-30B-A3B architecture | CONFIRMED (model card) |

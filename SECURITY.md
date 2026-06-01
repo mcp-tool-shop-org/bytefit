@@ -1,6 +1,6 @@
 # Security Policy
 
-bytefit is a local planning tool. It makes no network requests and emits no telemetry.
+bytefit is a local planning tool. By default it makes no external network requests and emits no telemetry.
 
 ## What bytefit does with your system
 
@@ -8,8 +8,10 @@ bytefit is a local planning tool. It makes no network requests and emits no tele
 - **Reads model metadata** — GGUF headers and local model catalogs (e.g. `ollama list`). Read-only.
 - **Measures NVMe bandwidth** via a transient local read benchmark against a temporary scratch file it creates and removes. No writes outside that scratch path.
 - **Emits** configuration and runtime arguments as data. In v1 bytefit recommends; it does not launch inference itself.
+- **Talks to a local Ollama daemon** over the loopback API (`127.0.0.1:11434`, or `OLLAMA_HOST`) to list installed models — local only, read-only, no auth token sent.
+- **Optionally** — only with `--hf <repo>` — fetches **public** GGUF headers from `huggingface.co` over HTTPS using Range requests. Read-only, no credentials, bounded to ≤16 MiB per file; weights are never downloaded. Off by default.
 
-No network requests. No telemetry. No persistent state beyond an optional local cache the user controls.
+By default, **no external network**. No telemetry. No persistent state beyond an optional local cache the user controls.
 
 ## Threat model
 
@@ -20,6 +22,7 @@ No network requests. No telemetry. No persistent state beyond an optional local 
 | Subprocess injection | System-binary calls use fixed argument arrays, never shell-string interpolation of user input |
 | Silent resource exhaustion | The admission guard refuses configs that would page; it fails loud, not silent |
 | Supply chain | Zero production dependencies — only Node built-ins at runtime |
+| Opt-in remote fetch (`--hf`) | Off by default; HTTPS to huggingface.co only; Range-bounded header reads (≤16 MiB); no auth/credentials; weights never downloaded |
 
 ## Reporting
 

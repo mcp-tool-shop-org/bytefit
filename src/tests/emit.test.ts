@@ -14,13 +14,23 @@ test("llama.cpp emit for a VRAM-fit loadout: -ngl + KV type + flash-attn, no fit
   assert.ok(!cmd.args?.includes("-ot"));
 });
 
-test("llama.cpp emit for an MoE offload: expert pin + --fit off + --mlock", () => {
+test("llama.cpp emit for a partial MoE offload: fractional --n-cpu-moe + --fit off + --mlock", () => {
   const lo = plan({ hardware: weak, model: qwen30bA3b, options: { useCase: "chat" } });
   assert.equal(lo.verdict, "degraded");
+  assert.equal(lo.placement?.tier, "vram+ram");
   const line = emitLlamaCpp(lo).args?.join(" ") ?? "";
-  assert.ok(line.includes("-ot"));
+  assert.ok(/--n-cpu-moe \d+/.test(line), `expected --n-cpu-moe N, got: ${line}`);
+  assert.ok(!line.includes("-ot"), "partial offload uses --n-cpu-moe, not a blanket -ot");
   assert.ok(line.includes("--fit off"));
   assert.ok(line.includes("--mlock"));
+});
+
+test("llama.cpp emit for the streaming disk tier pins ALL experts with -ot", () => {
+  const lo = plan({ hardware: omen, model: deepseekR1, options: { experimentalDisk: true } });
+  assert.equal(lo.placement?.tier, "disk");
+  const line = emitLlamaCpp(lo).args?.join(" ") ?? "";
+  assert.ok(line.includes("-ot"), "every layer's experts leave the GPU on the disk tier");
+  assert.ok(!line.includes("--n-cpu-moe"));
 });
 
 test("ollama emit warns about inexpressible MoE expert placement", () => {

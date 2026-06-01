@@ -12,14 +12,17 @@ import {
   DEFAULT_CONTEXT_LENGTH,
   DEFAULT_VRAM_HEADROOM_BYTES,
   DEFAULT_RAM_HEADROOM_BYTES,
+  VRAM_USABLE_FRACTION,
+  RAM_USABLE_FRACTION,
   INTERACTIVE_MIN_TOK_PER_SEC,
   fmtGiB,
 } from "./constants.js";
-import { selectQuant, smallestQuant, quantQualityRank, type QuantChoice } from "./quant.js";
+import { selectQuant, smallestQuant, quantQualityRank, lowBitRisk, type QuantChoice } from "./quant.js";
 import {
   kvBytesPerToken,
   kvBytesTotal as computeKvTotal,
   activeWeightBytesPerToken,
+  usableBytes,
 } from "./footprint.js";
 import { placeAndAdmit } from "./placement.js";
 import { predictTokensPerSec } from "./roofline.js";
@@ -40,13 +43,21 @@ export function plan(req: PlanRequest): Loadout {
   const experimentalDisk = opts.experimentalDisk ?? false;
 
   const reasoning: string[] = [];
-  const usableVram = Math.max(0, hardware.vramFreeBytes - vramHeadroomBytes);
-  const usableRam = Math.max(0, hardware.ramFreeBytes - ramHeadroomBytes);
+  const usableVram = usableBytes(hardware.vramFreeBytes, hardware.vramBytes, vramHeadroomBytes, VRAM_USABLE_FRACTION);
+  const usableRam = usableBytes(hardware.ramFreeBytes, hardware.ramBytes, ramHeadroomBytes, RAM_USABLE_FRACTION);
   const kvTotal = computeKvTotal(model, kvCacheType, contextLength);
 
   reasoning.push(
     `Usable ${fmtGiB(usableVram)} VRAM + ${fmtGiB(usableRam)} RAM after headroom; KV ${fmtGiB(kvTotal)} (${kvCacheType}, ${contextLength} ctx).`,
   );
+  if (model.arch.kvHeadsAssumed || model.arch.headDimAssumed) {
+    const omitted: string[] = [];
+    if (model.arch.kvHeadsAssumed) omitted.push(`head_count_kv (no-GQA assumed, kvHeads=${model.arch.kvHeads})`);
+    if (model.arch.headDimAssumed) omitted.push(`key_length (headDim≈${model.arch.headDim})`);
+    reasoning.push(
+      `KV is an upper bound — this GGUF omits ${omitted.join(" and ")}; actual KV may be smaller, so a faster tier could fit.`,
+    );
+  }
 
   // Quant selection: fast lane first (best quant that fits VRAM), then offload (VRAM+RAM).
   // Reasoning honors the Q4_K_M floor before any degraded low-bit fallback.
@@ -97,6 +108,14 @@ export function plan(req: PlanRequest): Loadout {
     `Quant ${choice.build.quant}${choice.build.dynamic ? " (dynamic)" : ""}: ${fmtGiB(choice.weightBytes)} weights.` +
       (choice.belowReasoningFloor && useCase === "reasoning" ? " Below Q4_K_M floor — degraded for reasoning." : ""),
   );
+  const bitRisk = lowBitRisk(choice.build);
+  if (bitRisk === "risky") {
+    reasoning.push(
+      `${choice.build.quant} is a legacy sub-4-bit quant — below the safe floor; quality can drop sharply (3-bit cliff). Prefer an IQ-quant or a Dynamic GGUF at this size, or a smaller model at Q4+.`,
+    );
+  } else if (bitRisk === "imatrix") {
+    reasoning.push(`${choice.build.quant} is sub-4-bit but imatrix/dynamic-recovered — aggressive; fine for non-reasoning, watch quality.`);
+  }
 
   const placed = placeAndAdmit(hardware, model, choice.build, kvTotal, {
     vramHeadroomBytes,
@@ -123,7 +142,9 @@ export function plan(req: PlanRequest): Loadout {
     reasoning.push(`Fits fully in VRAM. ~${predicted.toFixed(0)} tok/s.`);
   } else if (placed.placement.tier === "vram+ram") {
     reasoning.push(
-      `Offload: ${fmtGiB(placed.vramWeightBytes)} weights in VRAM, ${fmtGiB(placed.ramWeightBytes)} in RAM. ~${predicted.toFixed(0)} tok/s.`,
+      `Offload: ${fmtGiB(placed.vramWeightBytes)} weights in VRAM, ${fmtGiB(placed.ramWeightBytes)} in RAM` +
+        (placed.placement.cpuMoELayers ? `, ${placed.placement.cpuMoELayers} layers' experts on CPU` : "") +
+        `. ~${predicted.toFixed(0)} tok/s.`,
     );
   } else {
     reasoning.push(

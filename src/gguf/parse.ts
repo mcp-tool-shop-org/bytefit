@@ -14,6 +14,23 @@ class Reader {
     }
   }
 
+  private remaining(): number {
+    return this.buf.length - this.offset;
+  }
+
+  /**
+   * Reject an absurd length/count field before it drives a loop or allocation. Each element/byte
+   * consumes ≥1 byte, so a valid count can never exceed the bytes remaining; values past 2^53 are
+   * also rejected (u64→Number loses precision there). Throws GgufTruncatedError — not a hard error —
+   * so the file reader grows its window and retries for genuinely-large-but-valid metadata.
+   */
+  bounded(n: number, what: string): number {
+    if (!Number.isSafeInteger(n) || n < 0 || n > this.remaining()) {
+      throw new GgufTruncatedError(`${what} ${n} is out of range (remaining ${this.remaining()} bytes)`);
+    }
+    return n;
+  }
+
   u8(): number { this.ensure(1); const v = this.buf.readUInt8(this.offset); this.offset += 1; return v; }
   i8(): number { this.ensure(1); const v = this.buf.readInt8(this.offset); this.offset += 1; return v; }
   u16(): number { this.ensure(2); const v = this.buf.readUInt16LE(this.offset); this.offset += 2; return v; }
@@ -26,7 +43,7 @@ class Reader {
   i64(): number { this.ensure(8); const v = this.buf.readBigInt64LE(this.offset); this.offset += 8; return Number(v); }
 
   str(): string {
-    const len = this.u64();
+    const len = this.bounded(this.u64(), "string length");
     this.ensure(len);
     const s = this.buf.toString("utf8", this.offset, this.offset + len);
     this.offset += len;
@@ -50,7 +67,7 @@ function readValue(r: Reader, type: number): GgufValue {
     case GgufValueType.FLOAT64: return r.f64();
     case GgufValueType.ARRAY: {
       const sub = r.u32();
-      const count = r.u64();
+      const count = r.bounded(r.u64(), "array length");
       const arr: GgufValue[] = [];
       for (let i = 0; i < count; i++) arr.push(readValue(r, sub));
       return arr;
@@ -75,8 +92,8 @@ export function parseGguf(bytes: Buffer): GgufHeader {
   if (version < 2 || version > 3) {
     throw new GgufError(`unsupported GGUF version ${version}`);
   }
-  const tensorCount = r.u64();
-  const kvCount = r.u64();
+  const tensorCount = r.bounded(r.u64(), "tensor count");
+  const kvCount = r.bounded(r.u64(), "kv count");
   const metadata = new Map<string, GgufValue>();
   for (let i = 0; i < kvCount; i++) {
     const key = r.str();
@@ -86,7 +103,7 @@ export function parseGguf(bytes: Buffer): GgufHeader {
   const tensors: GgufTensorInfo[] = [];
   for (let i = 0; i < tensorCount; i++) {
     const name = r.str();
-    const nDims = r.u32();
+    const nDims = r.bounded(r.u32(), "tensor dim count");
     const dims: number[] = [];
     for (let d = 0; d < nDims; d++) dims.push(r.u64());
     const type = r.u32();

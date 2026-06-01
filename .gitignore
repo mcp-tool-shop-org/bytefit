@@ -5,3 +5,5 @@ coverage/
 *.tgz
 .env
 .DS_Store
+site/.astro/
+.polyglot-cache.json

@@ -5,6 +5,24 @@ export function bytesPerParam(quant: QuantType): number {
   return BITS_PER_WEIGHT[quant] / 8;
 }
 
+/** IQ-format quants are built with an importance matrix by construction. */
+export function isImatrixQuant(quant: QuantType): boolean {
+  return quant.startsWith("IQ");
+}
+
+/**
+ * Quality-risk tier for a build. Sub-4-bit weights are only quality-safe with imatrix/dynamic
+ * recovery (research-grounding #11: legacy <4-bit hits the 3-bit cliff — Dettmers & Zettlemoyer 2022,
+ * arXiv:2212.09720; IQ-quants and Unsloth Dynamic GGUFs soften it):
+ *   safe    — ≥ 4 bits/weight
+ *   imatrix — < 4 bits but an IQ-quant or a Dynamic GGUF (aggressive but recovered)
+ *   risky   — < 4 bits and a legacy non-dynamic quant (quality can drop sharply)
+ */
+export function lowBitRisk(build: QuantBuild): "safe" | "imatrix" | "risky" {
+  if (bytesPerParam(build.quant) >= 0.5) return "safe"; // ≥ 4 bits/weight
+  return isImatrixQuant(build.quant) || build.dynamic ? "imatrix" : "risky";
+}
+
 export function quantQualityRank(quant: QuantType): number {
   return QUANT_QUALITY_RANK[quant];
 }

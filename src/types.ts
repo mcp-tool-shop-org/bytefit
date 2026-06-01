@@ -45,6 +45,17 @@ export interface ModelArch {
   /** KV heads (= attention heads unless GQA/MQA reduces it). */
   kvHeads: number;
   headDim: number;
+  /**
+   * True when the GGUF omitted `head_count_kv` and kvHeads was assumed = head_count (no GQA).
+   * KV math is then an UPPER BOUND: a GQA model would use fewer KV heads and less cache.
+   * Kept conservative (paging-safe), but surfaced so the recommendation is honest about it.
+   */
+  kvHeadsAssumed?: boolean;
+  /**
+   * True when key_length was absent and headDim was derived from embedding/head_count (approximate
+   * for decoupled-head archs). Like kvHeadsAssumed, makes the KV estimate an upper-ish bound.
+   */
+  headDimAssumed?: boolean;
 }
 
 export interface ModelMeta {
@@ -83,9 +94,10 @@ export interface PlanOptions {
   experimentalDisk?: boolean;
   /** Force a KV cache type instead of letting bytefit choose. Default q8_0. */
   kvCacheType?: KVCacheType;
-  /** VRAM safety margin in bytes (activations/buffers). Default 512 MiB. */
+  /** Fixed VRAM headroom floor in bytes (CUDA context / compute buffers). Default 1536 MiB; combined
+   * with the VRAM_USABLE_FRACTION cap via usableBytes. */
   vramHeadroomBytes?: number;
-  /** RAM safety margin in bytes (OS/other apps). Default 2 GiB. */
+  /** Fixed RAM headroom floor in bytes (OS / other apps). Default 2 GiB; combined with RAM_USABLE_FRACTION. */
   ramHeadroomBytes?: number;
 }
 
@@ -95,6 +107,12 @@ export interface Placement {
   gpuLayers?: number;
   /** For MoE: routed experts placed on CPU/RAM (and/or disk). */
   cpuMoEExperts?: boolean;
+  /**
+   * For MoE PARTIAL offload: the number of layers whose routed experts go to CPU (`--n-cpu-moe N`),
+   * keeping attention + shared weights on the GPU. Undefined when all experts are offloaded (emit
+   * falls back to `-ot ...=CPU`) or none are.
+   */
+  cpuMoELayers?: number;
   /** Active-path bytes resident on each tier (drives the roofline). */
   activeVramBytes: number;
   activeRamBytes: number;

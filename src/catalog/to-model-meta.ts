@@ -11,17 +11,24 @@ export function toModelMeta(
   opts: { sizeBytes?: number; quant?: QuantType } = {},
 ): ModelMeta | undefined {
   const quant = opts.quant ?? info.quant;
-  if (info.layers === undefined || info.kvHeads === undefined || info.headDim === undefined || !quant) {
-    return undefined;
+  const totalParams = info.totalParams ?? 0;
+  if (info.layers === undefined || info.kvHeads === undefined || info.headDim === undefined || !quant || totalParams <= 0) {
+    return undefined; // a 0-param entry would footprint to 0 bytes and "fit" any hardware — drop it
   }
   return {
     id,
-    totalParams: info.totalParams ?? 0,
+    totalParams,
     activatedParams: info.activatedParams,
     isMoE: info.isMoE,
     expertCount: info.expertCount,
     activeExperts: info.activeExperts,
-    arch: { layers: info.layers, kvHeads: info.kvHeads, headDim: info.headDim },
+    arch: {
+      layers: info.layers,
+      kvHeads: info.kvHeads,
+      headDim: info.headDim,
+      ...(info.kvHeadsAssumed ? { kvHeadsAssumed: true } : {}),
+      ...(info.headDimAssumed ? { headDimAssumed: true } : {}),
+    },
     builds: [{ quant, ...(opts.sizeBytes !== undefined ? { sizeBytes: opts.sizeBytes } : {}) }],
   };
 }

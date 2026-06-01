@@ -18,6 +18,14 @@ export function parseNvidiaSmiCsv(
   return out;
 }
 
+/**
+ * Pick the GPU bytefit will plan against: the largest by total VRAM. Beats taking `[0]` blindly,
+ * which on a multi-GPU box (or an iGPU listed before the discrete card) plans against the wrong one.
+ */
+export function pickPrimaryGpu<T extends { vramTotalBytes: number }>(gpus: T[]): T | undefined {
+  return gpus.slice().sort((a, b) => b.vramTotalBytes - a.vramTotalBytes)[0];
+}
+
 /** Parse Linux /proc/meminfo for MemTotal & MemAvailable (reported in kB) → bytes. */
 export function parseMemInfo(text: string): { totalBytes?: number; availableBytes?: number } {
   const kb = (key: string): number | undefined => {
