@@ -46,8 +46,10 @@ combination is bytefit. Full landscape and evidence in [SPEC.md](SPEC.md).
 
 ## Security
 
-No network, no telemetry. Reads local model files and system info; shells out to trusted
-system binaries (`nvidia-smi`). See [SECURITY.md](SECURITY.md).
+No telemetry. By default no external network — the model catalog uses the local Ollama loopback
+API; the optional `--hf <repo>` flag fetches public GGUF headers from huggingface.co (off by
+default). Reads local model files and system info; shells out to trusted system binaries
+(`nvidia-smi`). See [SECURITY.md](SECURITY.md).
 
 ---
 

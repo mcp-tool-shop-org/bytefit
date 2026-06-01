@@ -3,6 +3,7 @@ import {
   probe,
   catalogFromOllama,
   catalogFromDir,
+  catalogFromHuggingFace,
   recommend,
   plan,
   emit,
@@ -52,6 +53,7 @@ function planOptions(flags: Flags): PlanOptions {
 async function gatherCatalog(flags: Flags): Promise<CatalogEntry[]> {
   const entries = await catalogFromOllama();
   if (typeof flags.dir === "string") entries.push(...(await catalogFromDir(flags.dir)));
+  if (typeof flags.hf === "string") entries.push(...(await catalogFromHuggingFace(flags.hf)));
   return entries;
 }
 
@@ -66,6 +68,7 @@ Usage:
 Options:
   --json                 Machine-readable JSON output
   --dir <path>           Also scan a folder of .gguf files (in addition to Ollama)
+  --hf <repo>            Also rank a Hugging Face GGUF repo without downloading (opt-in network)
   --ctx <n>              Context length in tokens (default 8192)
   --use-case <c>         reasoning | chat | bulk (default chat) — gates the quant floor
   --backend <b>          llama.cpp | ollama | lmstudio (plan only; default llama.cpp)
