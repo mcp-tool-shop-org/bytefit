@@ -29,7 +29,7 @@ export function emitLlamaCpp(loadout: Loadout, opts: EmitOptions = {}): EmittedC
       // partial offload, or a blanket `-ot ...=CPU` when every layer's experts must leave the GPU
       // (e.g. the streaming disk tier). Attention + shared weights stay on GPU via the -ngl above.
       if (p.cpuMoELayers && p.cpuMoELayers > 0) args.push("--n-cpu-moe", String(p.cpuMoELayers));
-      else if (p.cpuMoEExperts) args.push("-ot", ".ffn_.*_exps.=CPU");
+      else if (p.cpuMoEExperts) args.push("-ot", ".ffn_.*_exps.*=CPU");
       args.push("--fit", "off"); // honor our explicit placement instead of the auto-fitter
       if (p.tier === "vram+ram") args.push("--mlock"); // keep the RAM-resident weights from paging
     }
@@ -78,6 +78,7 @@ export function emitLmStudio(loadout: Loadout): EmittedCommand {
 
   if (loadout.kvCacheType && loadout.kvCacheType !== "f16") warnings.push(`LM Studio CLI can't set KV-cache type (wanted ${loadout.kvCacheType}).`);
   if (p?.cpuMoEExperts) warnings.push("LM Studio can't pin MoE experts to CPU.");
+  if (p?.tier === "disk") warnings.push("LM Studio can't stream MoE experts from disk — use the llama.cpp --experimental path.");
   if (loadout.speculativeLane && loadout.speculativeLane !== "none") warnings.push("LM Studio CLI has no speculative-decoding flag.");
 
   return { backend: "lmstudio", args, commandLine: `lms ${args.join(" ")}`, warnings };

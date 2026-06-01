@@ -130,8 +130,11 @@ async function main(): Promise<number> {
     if (cat.length === 0) console.log("No models found — is Ollama running? (run `ollama serve`) Or pass --dir <gguf-folder>.\n");
     for (const r of recs) {
       const l = r.loadout;
+      // Surface the KV upper-bound caveat here (not just in `plan`): when a GGUF omits head_count_kv we
+      // assume no-GQA (max KV), which can force a conservative DEGRADED verdict — say so where it shows.
+      const kvCaveat = l.reasoning.some((s) => s.includes("upper bound")) ? "  * KV upper-bound (may fit a faster tier)" : "";
       console.log(
-        `  ${l.modelId.padEnd(24)} ${l.verdict.toUpperCase().padEnd(9)} ${l.quant} ${l.kvCacheType} ctx${l.contextLength}  ~${(l.predictedTokensPerSec ?? 0).toFixed(0)} tok/s  [${l.placement?.tier}]`,
+        `  ${l.modelId.padEnd(24)} ${l.verdict.toUpperCase().padEnd(9)} ${l.quant} ${l.kvCacheType} ctx${l.contextLength}  ~${(l.predictedTokensPerSec ?? 0).toFixed(0)} tok/s  [${l.placement?.tier}]${kvCaveat}`,
       );
     }
     for (const n of hw.notes) console.log(`note: ${n}`);
@@ -192,6 +195,11 @@ async function main(): Promise<number> {
 main()
   .then((code) => process.exit(code))
   .catch((err) => {
-    console.error(err);
+    // Redacted structured error by default; the full stack (with host paths) only under BYTEFIT_DEBUG.
+    if (process.env.BYTEFIT_DEBUG) console.error(err);
+    else
+      console.error(
+        `bytefit: internal error [RUNTIME_ERROR]: ${err instanceof Error ? err.message : String(err)}\n  hint: re-run with BYTEFIT_DEBUG=1 for the full stack.`,
+      );
     process.exit(1);
   });
