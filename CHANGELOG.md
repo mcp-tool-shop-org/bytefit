@@ -1,45 +1,35 @@
 # Changelog
 
 All notable changes to this project are documented here. Format follows
-[Keep a Changelog](https://keepachangelog.com/); the project will adopt
-[SemVer](https://semver.org/) from its first published release.
+[Keep a Changelog](https://keepachangelog.com/) and the project adheres to
+[SemVer](https://semver.org/).
 
-## [Unreleased]
+## [1.0.0] — 2026-06-01
+
+First stable release. bytefit plans local-LLM loadouts end-to-end: probe your hardware, rank your
+models, and emit ready-to-run arguments — refusing anything that would page to disk.
 
 ### Added
-- Initial scaffold: package manifest, TypeScript ESM config, MIT license, security policy.
-- `SPEC.md` — locked architecture for the hardware-aware loadout planner, grounded in a
-  study-swarm (technique ceiling) and a primary-source verification pass (production floor
-  and competitive landscape).
-- Pure planning core (zero runtime deps): quant selection (fast-lane-first, Q4_K_M reasoning
-  floor, dynamic-GGUF tiebreak), footprint + KV-cache math, a blended memory-bandwidth roofline
-  tok/s predictor, tier placement with an anti-paging admission guard (refuse-don't-page), and
-  `plan()` + `recommend()`. 23 unit tests.
-- GGUF reader (zero-dep, first I/O-shell module): binary header + full KV-metadata parser (all
-  value types incl. arrays), `file_type` -> quant and architecture-field mapping to ModelMeta,
-  grow-on-demand local-file reader. 6 tests.
-- Hardware probe (zero-dep, cross-platform): nvidia-smi / AMD sysfs / Apple unified-memory VRAM
-  with a 0.90 free-VRAM backoff + a GPU-name -> bandwidth table; platform-correct usable free RAM
-  (Linux MemAvailable, macOS free+inactive, Windows ullAvailPhys); RAM bandwidth from DDR MT/s x
-  channels; optional measured NVMe read. Validated live on an RTX 5090. 7 tests.
-- Model catalog (zero-dep): Ollama enumeration (/api/tags + raw blob-GGUF parse for exact params
-  and expert counts; /api/show fallback) + local-dir .gguf scan + a shared GGUF -> ModelMeta builder.
-  Extended the GGUF reader to parse tensor-info -> exact total + MoE activated params. 5 tests;
-  validated live (9 Ollama models ranked on an RTX 5090, incl. a 36B MoE detected at 4.0B active).
-- Runtime-arg emitter (zero-dep): a Loadout -> ready-to-run args. llama.cpp full fidelity (-ngl,
-  -ot expert pin only in a genuine-offload regime, --fit off, --mlock, -ctk/-ctv, -fa, spec-decode
-  hint); Ollama (num_ctx/num_gpu + OLLAMA_* env) and LM Studio (--gpu ratio) with capability
-  warnings for what they can't express. 5 tests.
-- CLI `bytefit`: `probe`, `recommend`, `plan <model>` (--backend / --ctx / --use-case /
-  --experimental / --json). Validated live on an RTX 5090 — ranked 9 Ollama models and emitted
-  runnable llama.cpp / Ollama commands.
+- **`bytefit` CLI** — `probe`, `recommend`, and `plan <model>`, with `--json`, `--ctx`,
+  `--use-case`, `--backend`, `--dir`, `--hf`, and `--experimental`, plus `--help` and meaningful
+  exit codes (0 ok · 1 not found / refused · 2 usage).
+- **Model catalogs** — installed Ollama models (exact parameter and MoE active-param counts), a
+  local `.gguf` folder (`--dir`), and a Hugging Face GGUF repo without downloading weights
+  (`--hf <repo>`, opt-in).
+- **Hardware probe** — VRAM / RAM / measured NVMe across NVIDIA, AMD, and Apple Silicon, selecting
+  the largest GPU on multi-GPU machines and reporting honest free memory.
+- **Loadout planning** — quant + KV-cache type + context length + offload policy, a
+  memory-bandwidth tok/s prediction, and ready-to-run llama.cpp / Ollama / LM Studio arguments
+  (including fractional MoE expert offload via `--n-cpu-moe`).
+- **Anti-paging admission** — refuses configurations that would page to disk, with a structured
+  `{ code, message, hint }` reason and a non-zero exit code, rather than launch a silently-paging job.
+- Quant-quality guidance (warns on unsafe sub-4-bit quants), honest KV estimates when a GGUF omits
+  attention metadata, and a single memory-headroom model that won't over-refuse on small cards.
 
-### Changed
-- Core VRAM headroom default 512 MiB -> 1536 MiB (grounded in the oobabooga GGUF-VRAM-formula
-  intercept ~1517 MiB), plus a 0.90 free-VRAM backoff applied by the probe. (Per the io-shell swarm.)
+### Security
+- No telemetry. No external network by default; the optional `--hf` fetch is opt-in, read-only,
+  Range-bounded, and never downloads weights. Untrusted GGUF headers are bounds-checked.
 
 ### Notes
-- Pre-release (v0.0.0). Pure core + the full I/O shell (GGUF reader, probe, catalog, emitter) +
-  the `bytefit` CLI landed — runnable end-to-end. Next: fractional MoE expert offload
-  (`--n-cpu-moe`), HF-remote catalog, then shipcheck + the full treatment (v1.0.0).
-- Disk-backed MoE expert streaming is scoped as experimental R&D, not a shipping feature.
+- Zero runtime dependencies. First-class Windows / macOS / Linux support. Node ≥ 20.
+- The `--experimental` MoE disk-streaming tier is gated R&D, not a stability promise.

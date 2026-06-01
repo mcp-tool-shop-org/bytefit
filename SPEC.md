@@ -1,7 +1,7 @@
 # bytefit Specification
 
 > Hardware-aware local-LLM loadout planner.
-> Status: pre-release scaffold (v0.0.0). Architecture locked; implementation in progress.
+> Status: v1.0.0 — stable. Architecture locked; pure core + I/O shell + CLI shipped.
 
 ## 1. What bytefit is
 

@@ -1,6 +1,6 @@
 {
   "name": "@mcptoolshop/bytefit",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Hardware-aware local-LLM loadout planner: chooses model class, quant, KV-cache, context, and offload policy for your VRAM/RAM, and refuses configs that would silently page to disk.",
   "type": "module",
   "bin": {
