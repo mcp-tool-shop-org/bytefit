@@ -1,4 +1,11 @@
-# bytefit
+<p align="center">
+  <img src="assets/logo.png" alt="bytefit" width="380">
+</p>
+
+<p align="center">
+  <a href="https://github.com/mcp-tool-shop-org/bytefit/actions/workflows/ci.yml"><img src="https://github.com/mcp-tool-shop-org/bytefit/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT"></a>
+</p>
 
 **Hardware-aware local-LLM loadout planner.** It tells you the largest, most capable model your
 machine can actually run well — with the exact quantization, KV-cache, context length, and offload
