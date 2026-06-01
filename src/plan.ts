@@ -16,7 +16,6 @@ import {
   RAM_USABLE_FRACTION,
   INTERACTIVE_MIN_TOK_PER_SEC,
   REASONING_QUANT_FLOOR,
-  MOE_DECODE_EFFICIENCY,
   BANDWIDTH_EFFICIENCY,
   fmtGiB,
 } from "./constants.js";
@@ -28,7 +27,7 @@ import {
   usableBytes,
 } from "./footprint.js";
 import { placeAndAdmit } from "./placement.js";
-import { predictTokensPerSec } from "./roofline.js";
+import { predictTokensPerSec, moeDecodeEfficiency } from "./roofline.js";
 
 /**
  * Plan the best loadout for a single model on the given hardware: choose quant + KV-cache +
@@ -161,13 +160,17 @@ export function plan(req: PlanRequest): Loadout {
     };
   }
 
-  // MoE batch=1 decode realizes far lower effective bandwidth than dense (sparse expert gather); use the
-  // measured MoE factor so the tok/s isn't a confident over-prediction (CAL-1, calibration-analysis.md).
+  // MoE batch=1 decode realizes far lower effective bandwidth than dense (sparse expert gather) — but it
+  // is a GPU effect, so the penalty applies to a VRAM-RESIDENT MoE only; offloaded experts (CPU/RAM) use
+  // the dense factor (research-grounding #33/#35). Efficiency rises with active bytes (overhead amortizes).
+  const moeResident = model.isMoE && placed.placement.tier === "vram";
   const predicted = predictTokensPerSec(
     hardware,
     placed.placement,
     kvTotal,
-    model.isMoE ? { efficiency: MOE_DECODE_EFFICIENCY, kvEfficiency: BANDWIDTH_EFFICIENCY } : {},
+    moeResident
+      ? { efficiency: moeDecodeEfficiency(activeWeightBytesPerToken(model, choice.build)), kvEfficiency: BANDWIDTH_EFFICIENCY }
+      : {},
   );
   const speculativeLane: SpeculativeLane = placed.placement.tier === "vram" ? "none" : "self-speculative";
 
@@ -249,6 +252,9 @@ export function recommend(
 
 function scoreLoadout(model: ModelMeta, loadout: Loadout, interactive: boolean): number {
   if (loadout.verdict === "refused") return -Infinity;
+  // A malformed library-supplied entry (totalParams <= 0) must sort to the bottom, never NaN-poison the
+  // comparator (the CLI catalog path already drops these in toModelMeta; this guards the public API).
+  if (!Number.isFinite(model.totalParams) || model.totalParams <= 0) return -Infinity;
   let score = Math.log10(model.totalParams); // capability ~ scale of the model
   if (loadout.quant) {
     score += 0.3 * (quantQualityRank(loadout.quant) / 100);

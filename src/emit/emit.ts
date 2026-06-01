@@ -22,7 +22,7 @@ export function emitLlamaCpp(loadout: Loadout, opts: EmitOptions = {}): EmittedC
     // Emit -ngl 99 (all layers) for MoE, NOT the partial weight-fraction count: a partial -ngl would
     // run most layers' attention on the CPU, so the predicted tok/s would be a lie. The partial
     // gpuLayers value is for DENSE layer-split offload only.
-    if (p.cpuMoEExperts) args.push("-ngl", "99");
+    if (p.cpuMoEExperts) args.push("-ngl", "999"); // llama.cpp idiom for "all layers" (99 would under-offload a >99-layer model)
     else if (p.gpuLayers !== undefined) args.push("-ngl", String(p.gpuLayers));
     if (p.tier !== "vram") {
       // MoE expert offload: a fractional `--n-cpu-moe N` (first N layers' experts on CPU) for a
@@ -52,7 +52,10 @@ export function emitOllama(loadout: Loadout): EmittedCommand {
   if (loadout.contextLength) options.num_ctx = loadout.contextLength;
 
   const p = loadout.placement;
-  if (p && p.tier !== "vram" && p.gpuLayers !== undefined) options.num_gpu = p.gpuLayers;
+  // Only emit num_gpu for a DENSE layer-split. For a MoE expert-offload a partial num_gpu would make
+  // Ollama run a dense split (the CPU layers' attention on CPU) — the "lie" C4 fixed for llama.cpp — and
+  // Ollama can't pin experts anyway, so omit it and let the warning below send the user to llama.cpp.
+  if (p && p.tier !== "vram" && p.gpuLayers !== undefined && !p.cpuMoEExperts) options.num_gpu = p.gpuLayers;
   if (loadout.kvCacheType && loadout.kvCacheType !== "f16") env.OLLAMA_KV_CACHE_TYPE = loadout.kvCacheType;
 
   warnings.push("OLLAMA_KV_CACHE_TYPE / OLLAMA_FLASH_ATTENTION are server-wide (set before `ollama serve`), not per-request.");

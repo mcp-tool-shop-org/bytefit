@@ -1,5 +1,17 @@
 import type { Hardware, Placement } from "./types.js";
-import { BANDWIDTH_EFFICIENCY } from "./constants.js";
+import { BANDWIDTH_EFFICIENCY, MOE_CEILING, MOE_OVERHEAD_GB, GB } from "./constants.js";
+
+/**
+ * Effective bandwidth fraction for VRAM-resident MoE batch=1 decode as a function of active-expert bytes
+ * (research-grounding #33): rises from a low floor for small-active models toward {@link MOE_CEILING} as
+ * the fixed per-token overhead amortizes over more active bytes. NOT for offloaded MoE — use the dense
+ * {@link BANDWIDTH_EFFICIENCY} there. active≈2.2 GB ⇒ ~0.17; active≈18.5 GB ⇒ ~0.43.
+ */
+export function moeDecodeEfficiency(activeBytes: number): number {
+  const activeGB = activeBytes / GB;
+  if (!(activeGB > 0)) return BANDWIDTH_EFFICIENCY;
+  return MOE_CEILING * (activeGB / (activeGB + MOE_OVERHEAD_GB));
+}
 
 /**
  * Blended roofline for autoregressive decode. Decode is memory-bandwidth-bound:

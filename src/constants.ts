@@ -87,16 +87,19 @@ export const RAM_USABLE_FRACTION = 0.75;
 export const BANDWIDTH_EFFICIENCY = 0.7;
 
 /**
- * Effective VRAM bandwidth realized by MoE decode at batch=1, as a fraction of rated bandwidth — much
- * lower than the dense {@link BANDWIDTH_EFFICIENCY}. Routed-expert reads are a scattered gather (not
- * contiguous streaming) and a tiny active set under-utilizes the GPU, so a model whose active bytes
- * alone would predict hundreds of tok/s lands far lower. INTERIM single-anchor value, measured on this
- * rig (RTX 5090): qwen3.6:35b-a3b (36B / ~4B active, Q4_K_M) ran **136 tok/s** where the dense roofline
- * predicted ~490 (3.6× over) — implying ~0.18 effective. Consistent with the KTransformers DeepSeek-R1
- * range (~8.7–13.7 tok/s, research #27) applied to its 37B active. Fit to ONE MoE architecture — refine
- * via the batch=1-MoE efficiency study before treating as final. See docs/swarm/calibration-analysis.md.
+ * MoE batch=1 decode realizes far lower effective VRAM bandwidth than dense — routed-expert reads are a
+ * scattered gather (not contiguous streaming) AND there is a fixed per-token bookkeeping overhead, so
+ * realized efficiency RISES with active bytes as that overhead amortizes (research-grounding #32–35;
+ * Oncescu 2025 arXiv:2511.02237, Adhinarayanan & Jayasena 2026 arXiv:2603.08960, Cursor warp-decode).
+ * Modeled as `eff = MOE_CEILING · active_GB / (active_GB + MOE_OVERHEAD_GB)` (see {@link moeDecodeEfficiency}):
+ * fit to the re-measured 5090 anchor (qwen3.6:35b-a3b Q4_K_M, ~2.2 GB active = 137–139 tok/s ⇒ eff≈0.167)
+ * and the literature high-active anchor (DeepSeek-R1 ~37B-active Q4 ≈ 0.42 on M3 Ultra — a different
+ * memory regime, an order-of-magnitude check, not a co-equal calibration point). This is a
+ * llama.cpp/Ollama-Q4 reference-engine figure. Applied to VRAM-RESIDENT MoE only; offloaded experts
+ * (on CPU/RAM via --n-cpu-moe) use the dense factor, since the GPU-gather penalty doesn't apply there.
  */
-export const MOE_DECODE_EFFICIENCY = 0.18;
+export const MOE_CEILING = 0.55;
+export const MOE_OVERHEAD_GB = 5.0;
 
 /**
  * Random small-block reads (the MoE expert-streaming pattern) run ~3–6× below sequential NVMe

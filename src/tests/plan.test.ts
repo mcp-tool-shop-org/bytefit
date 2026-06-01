@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { plan, recommend, bytesPerParam, GiB, GB, type Hardware } from "../index.js";
+import { plan, recommend, bytesPerParam, moeDecodeEfficiency, BANDWIDTH_EFFICIENCY, GiB, GB, type Hardware } from "../index.js";
 import { weak, omen, qwen14b, qwen30bA3b, deepseekR1, qwen3Next80b, highRamConsumer } from "./fixtures.js";
 
 test("14B on a 12GB/16GB box fits in VRAM at a sane quant", () => {
@@ -50,13 +50,21 @@ test("invalid context length is refused cleanly, not silently mis-planned", () =
   assert.notEqual(ok.verdict, "refused");
 });
 
-test("MoE batch=1 tok/s uses the measured sparse-gather efficiency, not the dense roofline (CAL-1)", () => {
-  // 30B-A3B fits fully in VRAM on the Omen; under the dense eta this over-predicted ~3-4x. Assert a
-  // sane MoE band, not a confident over-prediction.
+test("MoE batch=1 tok/s uses the active-byte efficiency curve, not the dense roofline (CAL-1, #33)", () => {
+  // 30B-A3B (3.3B active) fits fully in VRAM on the Omen; the dense eta over-predicted ~3-4x. The
+  // active-byte MoE curve lands it near the measured ~137 tok/s reference, not ~600.
   const lo = plan({ hardware: omen, model: qwen30bA3b, options: { useCase: "chat", contextLength: 4096 } });
   assert.equal(lo.placement?.tier, "vram");
   const t = lo.predictedTokensPerSec ?? 0;
-  assert.ok(t > 80 && t < 280, `expected a sane MoE band, got ${t} tok/s`);
+  assert.ok(t > 110 && t < 180, `expected the MoE curve band, got ${t} tok/s`);
+});
+
+test("moeDecodeEfficiency rises with active bytes and stays below the dense factor (#33)", () => {
+  const small = moeDecodeEfficiency(2.2 * GB); // ~3.6B active Q4 — the measured anchor (~0.167)
+  const large = moeDecodeEfficiency(18.5 * GB); // ~37B active Q4
+  assert.ok(small > 0.14 && small < 0.2, `small-active ~0.167, got ${small}`);
+  assert.ok(large > small, "efficiency rises with active bytes (overhead amortizes)");
+  assert.ok(large < BANDWIDTH_EFFICIENCY, "stays below the dense factor");
 });
 
 test("recommend ranks runnable models best-first and drops refused ones", () => {
