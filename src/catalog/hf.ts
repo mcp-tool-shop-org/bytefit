@@ -40,7 +40,16 @@ async function readRemoteGgufHeader(url: string, fetchImpl: typeof fetch): Promi
   let chunk = INITIAL_RANGE;
   for (;;) {
     const res = await fetchImpl(url, { headers: { Range: `bytes=0-${chunk - 1}` }, redirect: "follow" });
-    if (!res.ok && res.status !== 206) throw new Error(`HF ${res.status} for ${url}`);
+    if (res.status !== 206) {
+      // The server ignored the Range header and is returning the FULL representation (200). A GGUF
+      // weight file is multi-GB; buffering it via arrayBuffer() would OOM. Only proceed if Content-Length
+      // proves it's small enough to be safe; otherwise refuse rather than buffer the whole file.
+      if (!res.ok) throw new Error(`HF ${res.status} for ${url}`);
+      const len = Number(res.headers.get("content-length") ?? NaN);
+      if (!Number.isFinite(len) || len > MAX_RANGE) {
+        throw new Error(`HF ${url} ignored Range (status ${res.status}) — refusing to buffer a full file`);
+      }
+    }
     const buf = Buffer.from(await res.arrayBuffer());
     try {
       return ggufToModelInfo(parseGguf(buf));

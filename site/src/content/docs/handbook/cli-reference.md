@@ -41,7 +41,7 @@ resolves (an ambiguous one lists the candidates and exits `2`).
 |------|---------|
 | `0` | OK |
 | `1` | Model not found, or the loadout was refused |
-| `2` | Usage error (bad command, ambiguous model, unknown backend) |
+| `2` | Usage error (bad command, ambiguous model, unknown backend or `--use-case`, out-of-range `--ctx`) |
 
 ## Model sources
 

@@ -87,11 +87,34 @@ export const RAM_USABLE_FRACTION = 0.75;
 export const BANDWIDTH_EFFICIENCY = 0.7;
 
 /**
+ * MoE batch=1 decode realizes far lower effective VRAM bandwidth than dense — routed-expert reads are a
+ * scattered gather (not contiguous streaming) AND there is a fixed per-token bookkeeping overhead, so
+ * realized efficiency RISES with active bytes as that overhead amortizes (research-grounding #32–35;
+ * Oncescu 2025 arXiv:2511.02237, Adhinarayanan & Jayasena 2026 arXiv:2603.08960, Cursor warp-decode).
+ * Modeled as `eff = MOE_CEILING · active_GB / (active_GB + MOE_OVERHEAD_GB)` (see {@link moeDecodeEfficiency}):
+ * fit to the re-measured 5090 anchor (qwen3.6:35b-a3b Q4_K_M, ~2.2 GB active = 137–139 tok/s ⇒ eff≈0.167)
+ * and the literature high-active anchor (DeepSeek-R1 ~37B-active Q4 ≈ 0.42 on M3 Ultra — a different
+ * memory regime, an order-of-magnitude check, not a co-equal calibration point). This is a
+ * llama.cpp/Ollama-Q4 reference-engine figure. Applied to VRAM-RESIDENT MoE only; offloaded experts
+ * (on CPU/RAM via --n-cpu-moe) use the dense factor, since the GPU-gather penalty doesn't apply there.
+ */
+export const MOE_CEILING = 0.55;
+export const MOE_OVERHEAD_GB = 5.0;
+
+/**
  * Random small-block reads (the MoE expert-streaming pattern) run ~3–6× below sequential NVMe
  * (SPEC §3.1); the disk-tier benchmark divides its sequential measurement by this to model effective
  * random access rather than over-promising the disk tier.
  */
 export const NVME_RANDOM_ACCESS_DISCOUNT = 4;
+
+/**
+ * Cap on the effective-random NVMe read the disk benchmark may report (post-discount). The portable
+ * Node benchmark reads back a file it just wrote, so the OS page cache inflates the raw figure — treat
+ * it as an optimistic upper bound and never let the experimental disk tier admit on an impossibly-fast
+ * disk. ~2 GB/s effective-random is already generous for consumer PCIe4/5 NVMe (4K-random is often <1).
+ */
+export const NVME_EFFECTIVE_RANDOM_CEILING_BYTES_PER_SEC = 2 * GB;
 
 /** Below this, an interactive loadout is flagged as sluggish (informational only). */
 export const INTERACTIVE_MIN_TOK_PER_SEC = 5;

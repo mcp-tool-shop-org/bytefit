@@ -56,6 +56,10 @@ export interface ModelArch {
    * for decoupled-head archs). Like kvHeadsAssumed, makes the KV estimate an upper-ish bound.
    */
   headDimAssumed?: boolean;
+  /** Local-attention window (tokens) for archs that interleave sliding-window layers (Gemma-class). */
+  slidingWindow?: number;
+  /** Number of GLOBAL (full-context) layers when sliding-window is present; the rest cap KV at the window. */
+  slidingWindowGlobalLayers?: number;
 }
 
 export interface ModelMeta {

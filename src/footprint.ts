@@ -9,7 +9,18 @@ export function kvBytesPerToken(model: ModelMeta, kvType: KVCacheType): number {
 }
 
 export function kvBytesTotal(model: ModelMeta, kvType: KVCacheType, contextLength: number): number {
-  return kvBytesPerToken(model, kvType) * contextLength;
+  const { layers, kvHeads, headDim, slidingWindow, slidingWindowGlobalLayers } = model.arch;
+  const perElemPerLayer = 2 * kvHeads * headDim * KV_BYTES_PER_ELEM[kvType];
+  // Sliding-window archs (Gemma-class): only the GLOBAL layers cache the full context; the local layers
+  // cap their KV at the window. Modeling every layer at full context over-estimates KV up to ~5x at long
+  // context and falsely refuses a model that actually fits (research-grounding #37: Gemma 3, 5 local:1
+  // global, window 1024 -> 27B at 32k = 16.0 GiB naive vs 3.1 GiB real).
+  if (slidingWindow && slidingWindow > 0 && slidingWindowGlobalLayers !== undefined) {
+    const nGlobal = Math.min(layers, Math.max(0, slidingWindowGlobalLayers));
+    const nLocal = layers - nGlobal;
+    return perElemPerLayer * (nGlobal * contextLength + nLocal * Math.min(contextLength, slidingWindow));
+  }
+  return perElemPerLayer * layers * contextLength;
 }
 
 /**

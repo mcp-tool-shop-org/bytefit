@@ -16,17 +16,30 @@ import {
 
 type Flags = Record<string, string | boolean>;
 
+/** Flags that never take a value (so they can't swallow the following positional, e.g. the model id). */
+const BOOLEAN_FLAGS = new Set(["json", "experimental", "help", "h"]);
+/** Flags that always consume the next token as their value (even one starting with "-", e.g. `--ctx -5`). */
+const VALUE_FLAGS = new Set(["dir", "hf", "ctx", "use-case", "backend"]);
+
 function parseArgs(argv: string[]): { cmd: string; positional: string[]; flags: Flags } {
   const flags: Flags = {};
   const positional: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === undefined) continue;
+    if (a === "-h" || a === "-help") {
+      flags.help = true; // short help flag (parseArgs only special-cased --double-dash before, so -h fell through to positional)
+      continue;
+    }
     if (a.startsWith("--")) {
       const key = a.slice(2);
       const next = argv[i + 1];
-      if (next !== undefined && !next.startsWith("--")) {
-        flags[key] = next;
+      // A boolean flag NEVER consumes the next token; a value flag always does; an unknown flag uses the
+      // heuristic (consume unless the next token looks like another flag). This stops `plan --json <model>`
+      // from swallowing the model id into `flags.json`.
+      const takesValue = next !== undefined && !BOOLEAN_FLAGS.has(key) && (VALUE_FLAGS.has(key) || !next.startsWith("-"));
+      if (takesValue) {
+        flags[key] = next as string;
         i++;
       } else {
         flags[key] = true;
@@ -88,8 +101,23 @@ async function main(): Promise<number> {
     return 0;
   }
 
+  // Reject a bad --ctx at the boundary (usage error, exit 2) instead of feeding NaN/negative/0 into
+  // the planner. `--ctx` with no value parses to boolean true → NaN here, also rejected.
+  if (flags.ctx !== undefined) {
+    const c = typeof flags.ctx === "string" ? Number(flags.ctx) : NaN;
+    if (!Number.isInteger(c) || c <= 0 || c > 1_048_576) {
+      console.error(`bad --ctx '${String(flags.ctx)}' — expected a positive integer up to 1048576`);
+      return 2;
+    }
+  }
+  // Reject an unrecognized --use-case at the boundary (it gates the quant floor) — parity with --backend/--ctx.
+  if (typeof flags["use-case"] === "string" && !["reasoning", "chat", "bulk"].includes(flags["use-case"])) {
+    console.error(`bad --use-case '${flags["use-case"]}' — expected: reasoning | chat | bulk`);
+    return 2;
+  }
+
   if (cmd === "probe") {
-    const hw = await probe();
+    const hw = await probe({ measureDisk: flags.experimental === true });
     if (json) return console.log(JSON.stringify(hw, null, 2)), 0;
     console.log(`${hw.gpu.name}  ${gi(hw.vramBytes)} GiB VRAM (${gi(hw.vramFreeBytes)} free) @ ${gbps(hw.vramBandwidthBytesPerSec)} GB/s`);
     console.log(`RAM  ${gi(hw.ramBytes)} GiB (${gi(hw.ramFreeBytes)} free) @ ${(hw.ramBandwidthBytesPerSec / 1e9).toFixed(1)} GB/s`);
@@ -99,7 +127,7 @@ async function main(): Promise<number> {
   }
 
   if (cmd === "recommend") {
-    const hw = await probe();
+    const hw = await probe({ measureDisk: flags.experimental === true });
     const cat = await gatherCatalog(flags);
     const recs = recommend(hw, cat.map((e) => e.model), planOptions(flags));
     if (json) return console.log(JSON.stringify(recs.map((r) => r.loadout), null, 2)), 0;
@@ -107,8 +135,11 @@ async function main(): Promise<number> {
     if (cat.length === 0) console.log("No models found — is Ollama running? (run `ollama serve`) Or pass --dir <gguf-folder>.\n");
     for (const r of recs) {
       const l = r.loadout;
+      // Surface the KV upper-bound caveat here (not just in `plan`): when a GGUF omits head_count_kv we
+      // assume no-GQA (max KV), which can force a conservative DEGRADED verdict — say so where it shows.
+      const kvCaveat = l.reasoning.some((s) => s.includes("upper bound")) ? "  * KV upper-bound (may fit a faster tier)" : "";
       console.log(
-        `  ${l.modelId.padEnd(24)} ${l.verdict.toUpperCase().padEnd(9)} ${l.quant} ${l.kvCacheType} ctx${l.contextLength}  ~${(l.predictedTokensPerSec ?? 0).toFixed(0)} tok/s  [${l.placement?.tier}]`,
+        `  ${l.modelId.padEnd(24)} ${l.verdict.toUpperCase().padEnd(9)} ${l.quant} ${l.kvCacheType} ctx${l.contextLength}  ~${(l.predictedTokensPerSec ?? 0).toFixed(0)} tok/s  [${l.placement?.tier}]${kvCaveat}`,
       );
     }
     for (const n of hw.notes) console.log(`note: ${n}`);
@@ -127,7 +158,7 @@ async function main(): Promise<number> {
       console.error(`unknown backend '${backendArg}' (use: ${valid.join(" | ")})`);
       return 2;
     }
-    const hw = await probe();
+    const hw = await probe({ measureDisk: flags.experimental === true });
     const cat = await gatherCatalog(flags);
     // Deterministic resolution: exact id wins; otherwise a prefix must be UNIQUE (no arbitrary pick).
     const exact = cat.find((e) => e.id === id);
@@ -169,6 +200,11 @@ async function main(): Promise<number> {
 main()
   .then((code) => process.exit(code))
   .catch((err) => {
-    console.error(err);
+    // Redacted structured error by default; the full stack (with host paths) only under BYTEFIT_DEBUG.
+    if (process.env.BYTEFIT_DEBUG) console.error(err);
+    else
+      console.error(
+        `bytefit: internal error [RUNTIME_ERROR]: ${err instanceof Error ? err.message : String(err)}\n  hint: re-run with BYTEFIT_DEBUG=1 for the full stack.`,
+      );
     process.exit(1);
   });

@@ -35,6 +35,11 @@ export function computeParams(md: Map<string, GgufValue>, tensors: GgufTensorInf
     totalParams += elements;
     if (EXPERT_TENSOR_RE.test(t.name)) expertParams += elements;
   }
+  // Defensive: if dims multiplied past 2^53 (precision loss) the count is poisoned — drop the tensor
+  // path so the caller falls back to general.parameter_count / size_label, not a wrong-but-exact count.
+  if (!Number.isSafeInteger(totalParams) || !Number.isSafeInteger(expertParams)) {
+    return { totalParams: 0, expertParams: 0, activatedParams: 0 };
+  }
 
   let activatedParams = totalParams;
   if (expertCount > 0 && activeExperts > 0 && expertParams > 0) {
