@@ -8,6 +8,9 @@ on:
       - "tsconfig.json"
       - "src/**"
       - ".github/workflows/**"
+      - "site/package.json"
+      - "site/package-lock.json"
+      - "site/astro.config.mjs"
   pull_request:
     paths:
       - "package.json"
@@ -15,6 +18,9 @@ on:
       - "tsconfig.json"
       - "src/**"
       - ".github/workflows/**"
+      - "site/package.json"
+      - "site/package-lock.json"
+      - "site/astro.config.mjs"
   workflow_dispatch:
 
 concurrency:
