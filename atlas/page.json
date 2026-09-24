@@ -1,0 +1,282 @@
+{
+  "authored": [
+    ".github/",
+    "assets/",
+    "docs/",
+    "root",
+    "site/"
+  ],
+  "breaks": [
+    {
+      "doors": 4,
+      "importedBy": [],
+      "importedByTests": [],
+      "kind": "part",
+      "name": "src",
+      "partLabel": "src"
+    }
+  ],
+  "changes": {
+    "first": true
+  },
+  "changesTogether": [
+    {
+      "a": "src/catalog/to-model-meta.ts",
+      "b": "src/tests/gqa.test.ts",
+      "either": 6,
+      "partLabels": [
+        "src",
+        "src"
+      ],
+      "parts": [
+        "src",
+        "src"
+      ],
+      "relation": "inside",
+      "shared": 5
+    },
+    {
+      "a": "src/catalog/to-model-meta.ts",
+      "b": "src/gguf/model-meta.ts",
+      "either": 8,
+      "partLabels": [
+        "src",
+        "src"
+      ],
+      "parts": [
+        "src",
+        "src"
+      ],
+      "relation": "inside",
+      "shared": 5
+    },
+    {
+      "a": "src/plan.ts",
+      "b": "src/types.ts",
+      "either": 13,
+      "partLabels": [
+        "src",
+        "src"
+      ],
+      "parts": [
+        "src",
+        "src"
+      ],
+      "relation": "inside",
+      "shared": 7
+    },
+    {
+      "a": "src/constants.ts",
+      "b": "src/index.ts",
+      "either": 12,
+      "partLabels": [
+        "src",
+        "src"
+      ],
+      "parts": [
+        "src",
+        "src"
+      ],
+      "relation": "inside",
+      "shared": 6
+    },
+    {
+      "a": "src/index.ts",
+      "b": "src/roofline.ts",
+      "either": 10,
+      "partLabels": [
+        "src",
+        "src"
+      ],
+      "parts": [
+        "src",
+        "src"
+      ],
+      "relation": "inside",
+      "shared": 5
+    }
+  ],
+  "changesTogetherNote": [
+    "Confidence is low: fewer than 20 source files reach 10 revisions in the window.",
+    "Window: 180 days; a pair counts from 3 shared commits, since 2 source files reach 10 revisions; the floor rises to 10 when 25 do."
+  ],
+  "changesTogetherWithTests": 0,
+  "commit": "1941e057a407375e432ef54dfac91d8d600469c0",
+  "defaultBranch": "main",
+  "derived": "6 parts, mostly TypeScript (49 files). Work enters through 5 doors; the busiest is @mcptoolshop/bytefit, which reaches 1 part. It publishes to npm. People run bytefit. People import @mcptoolshop/bytefit.",
+  "doors": [
+    {
+      "checks": [],
+      "checksCount": 0,
+      "file": "package.json",
+      "id": "package.json#@mcptoolshop/bytefit",
+      "kind": "package",
+      "landings": [],
+      "name": "@mcptoolshop/bytefit",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 28
+        }
+      ],
+      "runs": [
+        "src/index.ts"
+      ],
+      "runsCount": 1,
+      "sends": [],
+      "stages": [],
+      "triggers": []
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "file": ".github/workflows/pages.yml",
+      "id": ".github/workflows/pages.yml",
+      "landings": [],
+      "name": "Deploy site to GitHub Pages",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "site",
+          "depth": 0,
+          "files": 3
+        }
+      ],
+      "runs": [
+        "site/astro.config.mjs",
+        "site/src/"
+      ],
+      "runsCount": 2,
+      "sends": [
+        "deploys the site"
+      ],
+      "stages": [],
+      "triggers": [
+        "on a push to main touching 2 paths",
+        "or by hand"
+      ]
+    },
+    {
+      "checks": [
+        "src/"
+      ],
+      "checksCount": 1,
+      "file": ".github/workflows/ci.yml",
+      "id": ".github/workflows/ci.yml",
+      "landings": [],
+      "name": "ci",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 47
+        }
+      ],
+      "runs": [],
+      "runsCount": 0,
+      "sends": [],
+      "stages": [],
+      "triggers": [
+        "on a pull request touching 9 paths",
+        "on a push touching 9 paths",
+        "or by hand"
+      ]
+    },
+    {
+      "checks": [
+        "src/"
+      ],
+      "checksCount": 1,
+      "file": ".github/workflows/release.yml",
+      "id": ".github/workflows/release.yml",
+      "landings": [],
+      "name": "Release",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 47
+        }
+      ],
+      "runs": [],
+      "runsCount": 0,
+      "sends": [
+        "publishes to npm",
+        "creates a GitHub release"
+      ],
+      "stages": [],
+      "triggers": [
+        "when a tag matching `v*` is pushed"
+      ]
+    },
+    {
+      "checks": [],
+      "checksCount": 0,
+      "file": "package.json",
+      "id": "package.json#bytefit",
+      "kind": "command",
+      "landings": [],
+      "name": "bytefit",
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 29
+        }
+      ],
+      "runs": [
+        "src/cli.ts"
+      ],
+      "runsCount": 1,
+      "sends": [],
+      "stages": [],
+      "triggers": []
+    }
+  ],
+  "duplicates": [],
+  "duplicatesLead": null,
+  "duplicatesNote": [],
+  "edges": [],
+  "generated": [],
+  "generatedAt": "2026-09-24T09:15:46.950Z",
+  "limits": [
+    "1 write and 6 reads go to the directory the command is run in, the home directory or a path its caller passes, not to this repository.",
+    "2 commands are built at run time and not followed, 1 of them in tests.",
+    "Statistics confidence is low: fewer than 20 source files reach 10 revisions in the window."
+  ],
+  "mainDoor": "package.json#@mcptoolshop/bytefit",
+  "partLabels": {
+    ".github": ".github",
+    "assets": "assets",
+    "docs": "docs",
+    "root": "the repository root",
+    "site": "the site",
+    "src": "src"
+  },
+  "parts": 6,
+  "readers": [],
+  "repo": "mcp-tool-shop-org/bytefit",
+  "sequences": [],
+  "startDoor": "package.json#@mcptoolshop/bytefit",
+  "startHere": [
+    "src/index.ts"
+  ],
+  "summary": null,
+  "summaryFrom": null,
+  "testFiles": 18,
+  "testedBy": {
+    "src": 17
+  },
+  "unnamedWrites": 0,
+  "unread": [],
+  "unreadFiles": 0,
+  "unreadNote": [],
+  "untested": [],
+  "untestedNote": [],
+  "written": 0
+}

@@ -1,0 +1,1350 @@
+{
+  "boundaries": [
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "588620ca0338fa76b9dc5485b97c3dde2d9c50e00e4edf94c32dc42663ae3aaf",
+          "path": ".github/workflows/ci.yml"
+        },
+        {
+          "hash": "83f7731a14d9eef14298a59a4fb1b30a675abef654b18e22f6fa1a077cc74e2c",
+          "path": ".github/workflows/pages.yml"
+        },
+        {
+          "hash": "127525b221281f1568798062258d1b1f1c50623fbfed4e6e655b6b60e19815db",
+          "path": ".github/workflows/release.yml"
+        }
+      ],
+      "globs": [
+        ".github/**"
+      ],
+      "importConfidence": "full",
+      "name": ".github",
+      "origin": "authored",
+      "role": "config",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "e8d86e6b0579e75262bb7e59432cb9397f59d184b1ecd931dc14a51153c34cd7",
+          "path": "assets/logo.png"
+        }
+      ],
+      "globs": [
+        "assets/**"
+      ],
+      "importConfidence": "full",
+      "name": "assets",
+      "origin": "authored",
+      "role": "data",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "9985fea505883e41966f1943c810d4f594638c4c801643a27179982999075d44",
+          "path": "docs/research-grounding.md"
+        },
+        {
+          "hash": "da1d24d80c2df907c8076c46f6ff8b18ab17ee087554573ad5242de9fedb58df",
+          "path": "docs/swarm/_calibrate.ps1"
+        },
+        {
+          "hash": "c218620ea45b2471408bb3fb2a3ec98862161a68a4df14c6d4ec8186fa67defe",
+          "path": "docs/swarm/calibration-analysis.md"
+        },
+        {
+          "hash": "b5f145c00f0f2aa019e4c2413f698a54655ca5de9b06da34a6575d1b136b8e48",
+          "path": "docs/swarm/calibration-raw.json"
+        },
+        {
+          "hash": "8ded6204f0e6701a50f71ede094fbce4988aeed6a344afe3a83adec0f00939be",
+          "path": "docs/swarm/stage-a-findings-pass2.md"
+        },
+        {
+          "hash": "b06e0b118f1214b2f1b0d9674b8036843b7eb7f7ad5a0199d961cfc08f362e10",
+          "path": "docs/swarm/stage-a-findings.md"
+        }
+      ],
+      "globs": [
+        "docs/**"
+      ],
+      "importConfidence": "full",
+      "name": "docs",
+      "origin": "authored",
+      "role": "docs",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "101a56193878b6aa7512580d0a10dfa88945ae06873cc9022fe9f8efeb3a190c",
+          "path": ".gitignore"
+        },
+        {
+          "hash": "bdac58f7941c7e48fb81f101ad5d29dddea9b0b630703a9064e84058b568e3ca",
+          "path": "CHANGELOG.md"
+        },
+        {
+          "hash": "5ae6b3c8f446f0a7cb95176e4dadb91b68aaffb16b3be09f64f5de248b6a973a",
+          "path": "LICENSE"
+        },
+        {
+          "hash": "5ed2c3b6990271f51f97099fa94266acb291653de9d3e9feda0644610bb1f2c4",
+          "path": "README.es.md"
+        },
+        {
+          "hash": "2e54fb17309b201d5efa1a0fac55d3f2100642a9204e3dfc6b3f9b8cdcdf37f0",
+          "path": "README.fr.md"
+        },
+        {
+          "hash": "2011df1750563692d222348ce7bd3edfcf466695ac536348d88cf52620c34654",
+          "path": "README.hi.md"
+        },
+        {
+          "hash": "c1b26a9e6d2a8b3cc655602896c7f8ed604deba83541df89cca5d0f559462dc5",
+          "path": "README.it.md"
+        },
+        {
+          "hash": "96106878125ff0ad2c32cf8a659cad5661b620ecae99c6a2c2062e11da93b923",
+          "path": "README.ja.md"
+        },
+        {
+          "hash": "8995ac70e064585cb89ed32ce7fa7de6e67faf1d354cd9dd584d751d404ade62",
+          "path": "README.md"
+        },
+        {
+          "hash": "ab7224c05deb2baefb7f6d7f3fafd86d84fc6012583937bcf72ce8dcbd9f37af",
+          "path": "README.pt-BR.md"
+        },
+        {
+          "hash": "29d1de0ace8b7b8716bb97635da4d4e3802633387dfa3eaffc5871ef21ce1d10",
+          "path": "README.zh.md"
+        },
+        {
+          "hash": "3c97799787538a61aed96675d7e9a21bf189a77e9bd7afa414113c5aa7840dfc",
+          "path": "SCORECARD.md"
+        },
+        {
+          "hash": "da00e3f2e79a556244e9ec1d58cbf529f0504d9c42e80b5ba631bdc96d2d9d00",
+          "path": "SECURITY.md"
+        },
+        {
+          "hash": "94922be7f744b8b8bd8b56b31ab8ab9123b09d9f7af9ee0e35d76fd95205a57a",
+          "path": "SHIP_GATE.md"
+        },
+        {
+          "hash": "5a2a8da24393d0fe3a3b4023f9ad8a514213f3fa68127a734f43dd7f863e3634",
+          "path": "SPEC.md"
+        },
+        {
+          "hash": "6a347c62bbb170d23d82e62b054cc47ec480cb0bad3487ca9ee2691d7bda4da6",
+          "path": "package-lock.json"
+        },
+        {
+          "hash": "6386d6d8cdfd3c5a5dcc623cc96bb86b1f092072194a587f76954a1fb2d4a85f",
+          "path": "package.json"
+        },
+        {
+          "hash": "2d7826b56785ee8810c72fd040c0cf20660067d4d0e99b847f21199373e3ac70",
+          "path": "tsconfig.json"
+        }
+      ],
+      "globs": [
+        "*"
+      ],
+      "importConfidence": "full",
+      "name": "root",
+      "origin": "authored",
+      "role": "config",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 0,
+      "dynamicSpawnsInTests": 0,
+      "dynamicWrites": 0,
+      "entryPoints": [],
+      "externals": 0,
+      "files": [
+        {
+          "hash": "7c606ab217d7bfdfe663889734aa1e6d0d15fccbecef67aeaa288a5d0590cb24",
+          "path": "site/astro.config.mjs"
+        },
+        {
+          "hash": "b5578baf42cab82e5e7b451b6992cb929aeb6ff8d02d8e11ab690e6f67fea144",
+          "path": "site/package-lock.json"
+        },
+        {
+          "hash": "0fe0343f8ddb0628d954129b02a72b3b2c8f8f884b1380c5567403c4f55942f8",
+          "path": "site/package.json"
+        },
+        {
+          "hash": "e8d86e6b0579e75262bb7e59432cb9397f59d184b1ecd931dc14a51153c34cd7",
+          "path": "site/src/assets/logo.png"
+        },
+        {
+          "hash": "ec030f2e4bf6dc57eaca075d390c228b3212cf29db267e32ef92e110de1acdcc",
+          "path": "site/src/content.config.ts"
+        },
+        {
+          "hash": "2a032da8c6c7debe91533d65cc9acecca2c68b4c47314c7814a72005a15644b2",
+          "path": "site/src/content/docs/handbook/cli-reference.md"
+        },
+        {
+          "hash": "8ddf1834e27f2d65112fd7a1c8fb0dd2532b3ef34b3f167b8b9466a105c30d4d",
+          "path": "site/src/content/docs/handbook/concepts.md"
+        },
+        {
+          "hash": "888153855f7a4f94b0e65d4dbf58f4181919174b42c00de482ccef3ec3f451d6",
+          "path": "site/src/content/docs/handbook/getting-started.md"
+        },
+        {
+          "hash": "0b59430de72d9aab10c4a7da00b48126d172c143dbb3d13b1fd97c46237a8415",
+          "path": "site/src/content/docs/handbook/index.md"
+        },
+        {
+          "hash": "856bf6dc69a8b2b30cf84e09c42083676a9f0c0046b9a183b00aafb796fa70ac",
+          "path": "site/src/content/docs/handbook/security.md"
+        },
+        {
+          "hash": "a699ad78a6d27d6864ccfe4c3a4a01993aca28ecb4a3d20893f37db9f9b1a522",
+          "path": "site/src/pages/index.astro"
+        },
+        {
+          "hash": "a0a80d6887d168b335d8e8b65ff3300536e1642c7cf304e5346d1960ac5dc0a4",
+          "path": "site/src/site-config.ts"
+        },
+        {
+          "hash": "5995279a40a9a63426a93feec129006b261cc7200426a398914d0317722ef19b",
+          "path": "site/src/styles/global.css"
+        },
+        {
+          "hash": "9699457f0a7a31093d48944cabb11812852f0ce480732986b04896d53d29c4ca",
+          "path": "site/src/styles/starlight-custom.css"
+        },
+        {
+          "hash": "61fc24492db9aef7ec38eb91cfeebaef96155014bb5f22648fd8ed2327c6cae2",
+          "path": "site/tsconfig.json"
+        }
+      ],
+      "globs": [
+        "site/**"
+      ],
+      "importConfidence": "full",
+      "name": "site",
+      "origin": "authored",
+      "role": "site",
+      "testedBy": 0,
+      "unresolvedSites": 0
+    },
+    {
+      "dynamicReads": 0,
+      "dynamicSpawns": 2,
+      "dynamicSpawnsInTests": 1,
+      "dynamicWrites": 0,
+      "entryPoints": [
+        "src/cli.ts",
+        "src/index.ts"
+      ],
+      "externals": 0,
+      "files": [
+        {
+          "exports": [
+            "catalogFromHuggingFace",
+            "quantFromFilename"
+          ],
+          "hash": "eeb34ed093590051c2c16d9688dfb22765d2c9cfa5497b5c6a4c297d6907ec39",
+          "importsFiles": [
+            "src/catalog/ollama.ts",
+            "src/catalog/to-model-meta.ts",
+            "src/catalog/types.ts",
+            "src/gguf/index.ts",
+            "src/types.ts"
+          ],
+          "path": "src/catalog/hf.ts"
+        },
+        {
+          "hash": "20ee60b9b4a959024d247990076c36c9e9f5bbdecaa1569ea18d736e0d8dc7a2",
+          "importsFiles": [
+            "src/catalog/hf.ts",
+            "src/catalog/local.ts",
+            "src/catalog/ollama.ts",
+            "src/catalog/to-model-meta.ts",
+            "src/catalog/types.ts"
+          ],
+          "path": "src/catalog/index.ts"
+        },
+        {
+          "exports": [
+            "catalogFromDir",
+            "catalogFromGgufFile"
+          ],
+          "hash": "e7b5bb5921437c2ad53e244d3b7b9dae651e7263dd5d39b9fe7b56197988e46a",
+          "importsFiles": [
+            "src/catalog/to-model-meta.ts",
+            "src/catalog/types.ts",
+            "src/gguf/index.ts"
+          ],
+          "path": "src/catalog/local.ts"
+        },
+        {
+          "exports": [
+            "blobPathFromManifest",
+            "catalogFromOllama",
+            "ollamaManifestPath",
+            "quantFromLabel"
+          ],
+          "hash": "0fd799130a9a29e7acb1b398c9dcdb45a0c5ca0f3fd1137e7c79560c25c93c51",
+          "importsFiles": [
+            "src/catalog/to-model-meta.ts",
+            "src/catalog/types.ts",
+            "src/constants.ts",
+            "src/gguf/index.ts",
+            "src/types.ts"
+          ],
+          "path": "src/catalog/ollama.ts"
+        },
+        {
+          "exports": [
+            "toModelMeta"
+          ],
+          "hash": "773621d8c352b3bae58257604ad987a2ba36a48e9d30c0cd548e0977f6ee8fa1",
+          "importsFiles": [
+            "src/gguf/index.ts",
+            "src/types.ts"
+          ],
+          "path": "src/catalog/to-model-meta.ts"
+        },
+        {
+          "hash": "dcba10d4a5345ea396275a0f4500fad90e4c1e414c62d70d3275ff8e91f4c210",
+          "importsFiles": [
+            "src/types.ts"
+          ],
+          "path": "src/catalog/types.ts"
+        },
+        {
+          "entry": "main",
+          "entryRule": 1,
+          "hash": "d84b19a6f6b0e22da298b5dcb644332b1d58296cc8f81128360f73b316fe6c28",
+          "importsFiles": [
+            "src/index.ts"
+          ],
+          "path": "src/cli.ts",
+          "sequences": [
+            {
+              "calls": [
+                {
+                  "line": 67,
+                  "name": "catalogFromOllama",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "line": 68,
+                  "name": "catalogFromDir",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "line": 69,
+                  "name": "catalogFromHuggingFace",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": false,
+              "isDefaultExport": false,
+              "name": "gatherCatalog"
+            },
+            {
+              "calls": [
+                {
+                  "branch": "cmd === \"probe\"",
+                  "line": 120,
+                  "name": "probe",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "branch": "cmd === \"recommend\"",
+                  "line": 130,
+                  "name": "probe",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "branch": "cmd === \"recommend\"",
+                  "line": 67,
+                  "name": "catalogFromOllama",
+                  "target": {
+                    "file": "src/index.ts"
+                  },
+                  "via": "gatherCatalog"
+                },
+                {
+                  "branch": "cmd === \"recommend\"",
+                  "line": 68,
+                  "name": "catalogFromDir",
+                  "target": {
+                    "file": "src/index.ts"
+                  },
+                  "via": "gatherCatalog"
+                },
+                {
+                  "branch": "cmd === \"recommend\"",
+                  "line": 69,
+                  "name": "catalogFromHuggingFace",
+                  "target": {
+                    "file": "src/index.ts"
+                  },
+                  "via": "gatherCatalog"
+                },
+                {
+                  "branch": "cmd === \"recommend\"",
+                  "line": 132,
+                  "name": "recommend",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "branch": "cmd === \"plan\"",
+                  "line": 161,
+                  "name": "probe",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "branch": "cmd === \"plan\"",
+                  "line": 179,
+                  "name": "plan",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                },
+                {
+                  "branch": "cmd === \"plan\"",
+                  "line": 180,
+                  "name": "emit",
+                  "target": {
+                    "file": "src/index.ts"
+                  }
+                }
+              ],
+              "exported": false,
+              "invokedAtTopLevel": true,
+              "isDefaultExport": false,
+              "name": "main"
+            }
+          ]
+        },
+        {
+          "exports": [
+            "fmtGiB"
+          ],
+          "hash": "f99ebe3c8d67748db4646e87979564327c4c81489f5a6155d3d940e413371244",
+          "importsFiles": [
+            "src/types.ts"
+          ],
+          "path": "src/constants.ts"
+        },
+        {
+          "exports": [
+            "emit",
+            "emitLlamaCpp",
+            "emitLmStudio",
+            "emitOllama"
+          ],
+          "hash": "c711fa9651417b135a4e498e479010315d503d7b8f4e6103da2080924729f6c4",
+          "importsFiles": [
+            "src/emit/types.ts",
+            "src/types.ts"
+          ],
+          "path": "src/emit/emit.ts"
+        },
+        {
+          "hash": "0b46e9eb6737b6b1ad7f6dc73388e6d4c76a4e048fa1cbd5535f35872ca26a48",
+          "importsFiles": [
+            "src/emit/emit.ts",
+            "src/emit/types.ts"
+          ],
+          "path": "src/emit/index.ts"
+        },
+        {
+          "hash": "14ae0a2936988dd3db48366fcba47f84f196cc96e299ec2f9e398b10fc71ab50",
+          "path": "src/emit/types.ts"
+        },
+        {
+          "exports": [
+            "activeWeightBytesPerToken",
+            "kvBytesPerToken",
+            "kvBytesTotal",
+            "usableBytes"
+          ],
+          "hash": "cc3a36cbd71397503e02711584b6aecbf01b0e2d4b5a9b99e154b5873522beec",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/quant.ts",
+            "src/types.ts"
+          ],
+          "path": "src/footprint.ts"
+        },
+        {
+          "hash": "220e5727f11a87da19260ba8a2ed87debfdc03b3f64dcde83725042495df3ee9",
+          "importsFiles": [
+            "src/gguf/model-meta.ts",
+            "src/gguf/params.ts",
+            "src/gguf/parse.ts",
+            "src/gguf/read-file.ts",
+            "src/gguf/types.ts"
+          ],
+          "path": "src/gguf/index.ts"
+        },
+        {
+          "exports": [
+            "ggufModelInfoFromMetadata",
+            "ggufToModelInfo",
+            "parseSizeLabel"
+          ],
+          "hash": "ef1ca31f41b695591a1c5a5e8a59743a837cb52d8d9fe48858395165be4760c8",
+          "importsFiles": [
+            "src/gguf/params.ts",
+            "src/gguf/types.ts",
+            "src/types.ts"
+          ],
+          "path": "src/gguf/model-meta.ts"
+        },
+        {
+          "exports": [
+            "computeParams"
+          ],
+          "hash": "484540af3efbb6051c38e8a5b00f07a69968b9d0dd2332ffc3fc2cb3e20a78e5",
+          "importsFiles": [
+            "src/gguf/types.ts"
+          ],
+          "path": "src/gguf/params.ts"
+        },
+        {
+          "exports": [
+            "parseGguf"
+          ],
+          "hash": "3765b3b199aa769b2c8aaad1e7ae64d01a8473109d0693dbaebb001a2f37c2c3",
+          "importsFiles": [
+            "src/gguf/types.ts"
+          ],
+          "path": "src/gguf/parse.ts"
+        },
+        {
+          "exports": [
+            "readGgufMetadata"
+          ],
+          "hash": "baceb2987d1c03fee6a068ae577ceb010dacbb33df60c0fa9973c5a90a9f6665",
+          "importsFiles": [
+            "src/gguf/parse.ts",
+            "src/gguf/types.ts"
+          ],
+          "path": "src/gguf/read-file.ts"
+        },
+        {
+          "hash": "0b09387fb9cdf4ba4c1cfc9d76c0d1d12847a85516a58ff478ced8ac17606ee8",
+          "path": "src/gguf/types.ts"
+        },
+        {
+          "hash": "5f6a567532769170e2a31a18910e4fc2da73f39df3129cd429b741087dedc055",
+          "importsFiles": [
+            "src/catalog/index.ts",
+            "src/constants.ts",
+            "src/emit/index.ts",
+            "src/footprint.ts",
+            "src/gguf/index.ts",
+            "src/placement.ts",
+            "src/plan.ts",
+            "src/probe/index.ts",
+            "src/quant.ts",
+            "src/roofline.ts",
+            "src/types.ts"
+          ],
+          "path": "src/index.ts",
+          "reexportsAll": [
+            "src/catalog/index.ts",
+            "src/emit/index.ts",
+            "src/gguf/index.ts",
+            "src/probe/index.ts",
+            "src/types.ts"
+          ]
+        },
+        {
+          "exports": [
+            "placeAndAdmit"
+          ],
+          "hash": "ae829e076233a73a3e8d59eccf825d926c1411d8990675e90bd6255731703878",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/footprint.ts",
+            "src/types.ts"
+          ],
+          "path": "src/placement.ts"
+        },
+        {
+          "exports": [
+            "plan",
+            "recommend"
+          ],
+          "hash": "ee08af0e489dfe8b4c1c478eabb75677bc3f6552af11dcaaea18ad7cff6708ba",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/footprint.ts",
+            "src/placement.ts",
+            "src/quant.ts",
+            "src/roofline.ts",
+            "src/types.ts"
+          ],
+          "path": "src/plan.ts"
+        },
+        {
+          "exports": [
+            "appleBandwidth",
+            "nvidiaBandwidth"
+          ],
+          "hash": "fc8c0eafcf40b6c702ba6f9d01207061ac2077e04d6cfcd684c6e3da2f8c2140",
+          "importsFiles": [
+            "src/probe/types.ts"
+          ],
+          "path": "src/probe/gpu-tables.ts"
+        },
+        {
+          "hash": "f2ec8acae5c70ae8a4a6ef988cbaf2aabf8388471d6cd34cbd15ca7d0640b33d",
+          "importsFiles": [
+            "src/probe/gpu-tables.ts",
+            "src/probe/parsers.ts",
+            "src/probe/probe.ts",
+            "src/probe/types.ts"
+          ],
+          "path": "src/probe/index.ts"
+        },
+        {
+          "exports": [
+            "parseMemInfo",
+            "parseNvidiaSmiCsv",
+            "parseVmStat",
+            "parseWin32Memory",
+            "pickPrimaryGpu",
+            "ramBandwidthBytesPerSec"
+          ],
+          "hash": "11b24dad21a6092b0682741ad1c81882658af3feea86153ec076a68208301a0d",
+          "path": "src/probe/parsers.ts"
+        },
+        {
+          "exports": [
+            "probe",
+            "probeGpu",
+            "probeRam"
+          ],
+          "hash": "9240d3ea4bb9dd03e619145dae375332b16acdc365eda0a5e018399a511231a5",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/probe/gpu-tables.ts",
+            "src/probe/parsers.ts",
+            "src/probe/types.ts",
+            "src/types.ts"
+          ],
+          "path": "src/probe/probe.ts"
+        },
+        {
+          "hash": "ddcda529089d718f7758dfd03b3c7fe37afd5a6143cd745e29f42916b44489de",
+          "importsFiles": [
+            "src/types.ts"
+          ],
+          "path": "src/probe/types.ts"
+        },
+        {
+          "exports": [
+            "buildWeightBytes",
+            "bytesPerParam",
+            "isImatrixQuant",
+            "lowBitRisk",
+            "quantQualityRank",
+            "selectQuant",
+            "smallestQuant"
+          ],
+          "hash": "950b5bbae6b0523d8d720f116baf2cbefda3b42f94a0d82c18a78c957d6e2002",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/types.ts"
+          ],
+          "path": "src/quant.ts"
+        },
+        {
+          "exports": [
+            "moeDecodeEfficiency",
+            "predictTokensPerSec"
+          ],
+          "hash": "48bcb8f58ef4664f400ecb66270123905bf1f4980602b34301eb94aacb8664c5",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/types.ts"
+          ],
+          "path": "src/roofline.ts"
+        },
+        {
+          "hash": "bc36731128b6281ae83c456d4f6004548232529615b789ae80085b3c0ec4bb4e",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/gguf-fixture.ts"
+          ],
+          "path": "src/tests/catalog.test.ts"
+        },
+        {
+          "hash": "2d0dbd46330dac4d21d398b595976ea00a45ceb09eaa17f24751d3398ef14fe6",
+          "path": "src/tests/cli.test.ts"
+        },
+        {
+          "hash": "289979457cc68304c0cd0b8b96528d40e811d58b2591a6b418a0e88b94b36928",
+          "path": "src/tests/docs-drift.test.ts"
+        },
+        {
+          "hash": "17259a052a2ffeaf7db143b18b062c5ce7c9328b0c1f580877d9b62c43dcf2c3",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/fixtures.ts"
+          ],
+          "path": "src/tests/emit.test.ts"
+        },
+        {
+          "hash": "929202f0197347d6610b002c2ccad8bb4d00f7c55b499eedaca035d7d12384b3",
+          "importsFiles": [
+            "src/constants.ts",
+            "src/types.ts"
+          ],
+          "path": "src/tests/fixtures.ts"
+        },
+        {
+          "hash": "aa3ea712d271bcd5e2901efcb4c5ca668b52aeb80c86c44ad8620c09971e5234",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/fixtures.ts"
+          ],
+          "path": "src/tests/footprint.test.ts"
+        },
+        {
+          "exports": [
+            "buildGguf"
+          ],
+          "hash": "946ff7f7e7eabafdf1a1de53e2f8e420d4045514eda65861277fc780a30f396a",
+          "importsFiles": [
+            "src/gguf/index.ts"
+          ],
+          "path": "src/tests/gguf-fixture.ts"
+        },
+        {
+          "hash": "94264de59a0c4f6773511ffffc9c63340b70b7003a8b31cf7f3b5145e4894aea",
+          "importsFiles": [
+            "src/gguf/index.ts",
+            "src/gguf/parse.ts"
+          ],
+          "path": "src/tests/gguf-safety.test.ts"
+        },
+        {
+          "hash": "666cafe54e7518958531241718f999f7570ec811f73a981c9463081b39751d78",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/gguf-fixture.ts"
+          ],
+          "path": "src/tests/gguf.test.ts"
+        },
+        {
+          "hash": "c3aa18d5579ecd125d8d2fd9bda1b6e0dd90c8f62e5a6ca7b59a3bb702a89914",
+          "importsFiles": [
+            "src/catalog/to-model-meta.ts",
+            "src/gguf/index.ts",
+            "src/gguf/types.ts",
+            "src/index.ts"
+          ],
+          "path": "src/tests/gqa.test.ts"
+        },
+        {
+          "hash": "c3fa1ad820afb5ff8da1fe03cd392fc384ad9f1663773785357a0f1e998aeb8e",
+          "importsFiles": [
+            "src/index.ts"
+          ],
+          "path": "src/tests/headroom.test.ts"
+        },
+        {
+          "hash": "77cc9095861d7dbbd6548c2c4925326ddba4ebbc8ed13ac96a69474ee9159f0b",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/gguf-fixture.ts"
+          ],
+          "path": "src/tests/hf.test.ts"
+        },
+        {
+          "hash": "4c2d5e8cc8839f7a5b1b0b69089f1c742d369dd722cab64262e99e1ac7b7aff9",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/fixtures.ts"
+          ],
+          "path": "src/tests/placement.test.ts"
+        },
+        {
+          "hash": "d5a392d91709afe64eb7db777ac188189b90500e3a1c47cbbd3ad8bebbaac2a5",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/fixtures.ts"
+          ],
+          "path": "src/tests/plan.test.ts"
+        },
+        {
+          "hash": "e552ee46960f79cca9d0605b853faf411e98aa133c0de35d8abf3a1a04dd2f5d",
+          "importsFiles": [
+            "src/index.ts"
+          ],
+          "path": "src/tests/probe.test.ts"
+        },
+        {
+          "hash": "2675d3f916e67f6be056d8ee245b5d13a26f6075d018121dc11f0e6acb0b02fd",
+          "importsFiles": [
+            "src/index.ts"
+          ],
+          "path": "src/tests/quant-risk.test.ts"
+        },
+        {
+          "hash": "f141dc854ba8996c8bd216d1d967b587d441e208cf5ee48145a74de842ab27f5",
+          "importsFiles": [
+            "src/index.ts",
+            "src/tests/fixtures.ts"
+          ],
+          "path": "src/tests/quant.test.ts"
+        },
+        {
+          "hash": "8b95a358497f90ded9da258f27dcb7217a3cbbe5b66c26dfc10ddedbe7749e54",
+          "importsFiles": [
+            "src/index.ts"
+          ],
+          "path": "src/tests/roofline.test.ts"
+        },
+        {
+          "hash": "1185842059bf0038bdcf636d743be50d5af47812e5714d188ad3af09b286e10f",
+          "path": "src/types.ts"
+        }
+      ],
+      "globs": [
+        "src/**"
+      ],
+      "importConfidence": "full",
+      "name": "src",
+      "origin": "authored",
+      "outsideReads": 6,
+      "outsideWrites": 1,
+      "role": "code",
+      "testedBy": 17,
+      "unresolvedSites": 0
+    }
+  ],
+  "doors": [
+    {
+      "checksCount": 1,
+      "commands": [
+        {
+          "job": "build-test",
+          "step": "Atlas check",
+          "text": "npx --yes @dogfood-lab/atlas@1.17.0 check"
+        },
+        {
+          "job": "build-test",
+          "step": "3",
+          "text": "npm ci"
+        },
+        {
+          "job": "build-test",
+          "step": "4",
+          "text": "npm run verify"
+        }
+      ],
+      "elsewhere": [],
+      "file": ".github/workflows/ci.yml",
+      "landings": [],
+      "mentions": [],
+      "name": "ci",
+      "permissions": [],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 47
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "directory": true,
+          "job": "build-test",
+          "matched": true,
+          "path": "src/",
+          "runKind": "checks",
+          "via": "tsc tsconfig.json"
+        }
+      ],
+      "runsCount": 1,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [
+        {
+          "event": "pull_request",
+          "paths": [
+            ".github/workflows/**",
+            "atlas/**",
+            "package-lock.json",
+            "package.json",
+            "site/astro.config.mjs",
+            "site/package-lock.json",
+            "site/package.json",
+            "src/**",
+            "tsconfig.json"
+          ]
+        },
+        {
+          "event": "push",
+          "paths": [
+            ".github/workflows/**",
+            "atlas/**",
+            "package-lock.json",
+            "package.json",
+            "site/astro.config.mjs",
+            "site/package-lock.json",
+            "site/package.json",
+            "src/**",
+            "tsconfig.json"
+          ]
+        },
+        {
+          "event": "workflow_dispatch"
+        }
+      ],
+      "uses": [
+        "actions/checkout",
+        "actions/setup-node"
+      ],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 0,
+      "commands": [
+        {
+          "job": "build",
+          "step": "Install site dependencies",
+          "text": "npm ci"
+        },
+        {
+          "job": "build",
+          "step": "Build site",
+          "text": "npm run build"
+        }
+      ],
+      "elsewhere": [],
+      "file": ".github/workflows/pages.yml",
+      "landings": [],
+      "mentions": [],
+      "name": "Deploy site to GitHub Pages",
+      "permissions": [
+        "contents:read",
+        "id-token:write",
+        "pages:write"
+      ],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "site",
+          "depth": 0,
+          "files": 3
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "job": "build",
+          "matched": true,
+          "path": "site/astro.config.mjs",
+          "runKind": "executes",
+          "via": "astro build"
+        },
+        {
+          "directory": true,
+          "job": "build",
+          "matched": true,
+          "path": "site/src/",
+          "runKind": "executes",
+          "via": "astro build"
+        }
+      ],
+      "runsCount": 2,
+      "secrets": [],
+      "sends": {
+        "deploysPages": true,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [
+        {
+          "branches": [
+            "main"
+          ],
+          "event": "push",
+          "paths": [
+            ".github/workflows/pages.yml",
+            "site/**"
+          ]
+        },
+        {
+          "event": "workflow_dispatch"
+        }
+      ],
+      "uses": [
+        "actions/checkout",
+        "actions/deploy-pages",
+        "actions/setup-node",
+        "actions/upload-pages-artifact"
+      ],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 1,
+      "commands": [
+        {
+          "job": "release",
+          "step": "Install npm >=11.5 in a sandbox for OIDC trusted-publishing auth",
+          "text": "# Node 22's bundled npm 10.x breaks on in-place 'npm install -g npm@latest'\n# (MODULE_NOT_FOUND arborist race). Install npm@latest into a sandbox dir and\n# shadow the system npm via PATH instead — the system npm is left untouched.\nSANDBOX=\"$HOME/.npm-cli-sandbox\"\nmkdir -p \"$SANDBOX\"\npushd \"$SANDBOX\" >/dev/null\necho '{\"name\":\"npm-cli-sandbox\",\"version\":\"0.0.0\",\"private\":true}' > package.json\nnpm install --no-save --no-audit --no-fund --silent npm@latest\npopd >/dev/null\necho \"$SANDBOX/node_modules/.bin\" >> \"$GITHUB_PATH\"\n\"$SANDBOX/node_modules/.bin/npm\" --version\n"
+        },
+        {
+          "job": "release",
+          "step": "Verify tag matches package.json version",
+          "text": "PKG_VERSION=$(node -p \"require('./package.json').version\")\nTAG_VERSION=\"${GITHUB_REF_NAME#v}\"\necho \"Tag ${GITHUB_REF_NAME} -> ${TAG_VERSION}; package ${PKG_VERSION}\"\nif [ \"${PKG_VERSION}\" != \"${TAG_VERSION}\" ]; then\n  echo \"::error::Tag ${TAG_VERSION} does not match package.json version ${PKG_VERSION}\"\n  exit 1\nfi\n"
+        },
+        {
+          "job": "release",
+          "step": "Install dependencies",
+          "text": "npm ci"
+        },
+        {
+          "job": "release",
+          "step": "Build + typecheck + test",
+          "text": "npm run verify"
+        },
+        {
+          "job": "release",
+          "step": "npm pack dry-run (verify shape)",
+          "text": "npm pack --dry-run"
+        },
+        {
+          "job": "release",
+          "step": "Extract release notes from CHANGELOG",
+          "text": "awk '/^## \\[/{n++; if(n==2) exit} n==1' CHANGELOG.md > RELEASE_NOTES.md"
+        },
+        {
+          "job": "release",
+          "step": "Publish to npm with provenance (OIDC trusted publisher)",
+          "text": "npm publish --provenance --access public"
+        },
+        {
+          "job": "release",
+          "step": "Create GitHub Release",
+          "text": "gh release create \"${GITHUB_REF_NAME}\" \\\n  --title \"bytefit ${GITHUB_REF_NAME}\" \\\n  --notes-file RELEASE_NOTES.md \\\n  --verify-tag\n"
+        }
+      ],
+      "elsewhere": [],
+      "file": ".github/workflows/release.yml",
+      "landings": [],
+      "mentions": [
+        {
+          "job": "release",
+          "path": "CHANGELOG.md"
+        },
+        {
+          "job": "release",
+          "path": "package.json"
+        }
+      ],
+      "name": "Release",
+      "permissions": [
+        "contents:write",
+        "id-token:write"
+      ],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 47
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "directory": true,
+          "job": "release",
+          "matched": true,
+          "path": "src/",
+          "runKind": "checks",
+          "via": "tsc tsconfig.json"
+        }
+      ],
+      "runsCount": 1,
+      "secrets": [
+        "GITHUB_TOKEN"
+      ],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "packages": [
+          {
+            "dir": "",
+            "name": "@mcptoolshop/bytefit",
+            "registry": "npm"
+          }
+        ],
+        "publishes": true,
+        "publishesTo": [
+          "npm"
+        ],
+        "releases": true
+      },
+      "stages": [],
+      "triggers": [
+        {
+          "event": "push",
+          "tags": [
+            "v*"
+          ]
+        }
+      ],
+      "uses": [
+        "actions/checkout",
+        "actions/setup-node"
+      ],
+      "usesWorkflowToken": true
+    },
+    {
+      "checksCount": 0,
+      "commands": [],
+      "elsewhere": [],
+      "entry": "src/index.ts",
+      "file": "package.json",
+      "kind": "package",
+      "landings": [],
+      "mentions": [],
+      "name": "@mcptoolshop/bytefit",
+      "permissions": [],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 28
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "path": "src/index.ts",
+          "runKind": "executes"
+        }
+      ],
+      "runsCount": 1,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [],
+      "uses": [],
+      "usesWorkflowToken": false
+    },
+    {
+      "checksCount": 0,
+      "commands": [],
+      "elsewhere": [],
+      "file": "package.json",
+      "kind": "command",
+      "landings": [],
+      "mentions": [],
+      "name": "bytefit",
+      "permissions": [],
+      "pushes": false,
+      "reach": [
+        {
+          "boundary": "src",
+          "depth": 0,
+          "files": 29
+        }
+      ],
+      "readers": [],
+      "runs": [
+        {
+          "path": "src/cli.ts",
+          "runKind": "executes"
+        }
+      ],
+      "runsCount": 1,
+      "secrets": [],
+      "sends": {
+        "deploysPages": false,
+        "dispatchesTo": [],
+        "opensIssues": false,
+        "opensIssuesOnFailure": false,
+        "opensPullRequests": false,
+        "publishes": false,
+        "publishesTo": [],
+        "releases": false
+      },
+      "stages": [],
+      "triggers": [],
+      "uses": [],
+      "usesWorkflowToken": false
+    }
+  ],
+  "edges": [],
+  "generatedFrom": {
+    "commit": "1941e057a407375e432ef54dfac91d8d600469c0",
+    "tracked": 90
+  },
+  "landings": [
+    {
+      "readers": [
+        {
+          "by": ".github/workflows/release.yml"
+        }
+      ],
+      "target": "CHANGELOG.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "src/tests/docs-drift.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        },
+        {
+          "by": "src/tests/hf.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "README.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "src/tests/docs-drift.test.ts",
+          "call": "literal",
+          "confidence": "ast",
+          "fromTests": true
+        }
+      ],
+      "target": "SPEC.md",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": ".github/workflows/release.yml"
+        }
+      ],
+      "target": "package.json",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "site/astro.config.mjs",
+          "call": "content-collection",
+          "confidence": "ast"
+        }
+      ],
+      "target": "site/src/content/docs",
+      "writers": []
+    },
+    {
+      "readers": [
+        {
+          "by": "site/astro.config.mjs",
+          "call": "autogenerate",
+          "confidence": "ast"
+        }
+      ],
+      "target": "site/src/content/docs/handbook",
+      "writers": []
+    }
+  ],
+  "overlaps": [],
+  "submodules": [],
+  "symlinks": [],
+  "testFiles": 18,
+  "unassigned": []
+}
