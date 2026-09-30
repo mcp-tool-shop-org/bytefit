@@ -105,8 +105,8 @@
     "definition": "commits is how many commits in the window touch the file, including merges and commits dropped from coupling. lines is added plus deleted in those commits.",
     "files": [
       {
-        "commits": 6,
-        "lines": 126,
+        "commits": 10,
+        "lines": 350,
         "path": ".github/workflows/ci.yml"
       },
       {
@@ -200,6 +200,36 @@
         "path": "assets/logo.png"
       },
       {
+        "commits": 2,
+        "lines": 174,
+        "path": "atlas/README.md"
+      },
+      {
+        "commits": 2,
+        "lines": 52,
+        "path": "atlas/boundaries.yaml"
+      },
+      {
+        "commits": 2,
+        "lines": 564,
+        "path": "atlas/page.json"
+      },
+      {
+        "commits": 2,
+        "lines": 1312,
+        "path": "atlas/statistics.json"
+      },
+      {
+        "commits": 2,
+        "lines": 2700,
+        "path": "atlas/structure.json"
+      },
+      {
+        "commits": 2,
+        "lines": 36,
+        "path": "codecov.yml"
+      },
+      {
         "commits": 5,
         "lines": 1111,
         "path": "docs/research-grounding.md"
@@ -235,8 +265,8 @@
         "path": "package-lock.json"
       },
       {
-        "commits": 7,
-        "lines": 77,
+        "commits": 9,
+        "lines": 79,
         "path": "package.json"
       },
       {
@@ -550,19 +580,19 @@
         "path": "src/types.ts"
       },
       {
-        "commits": 3,
-        "lines": 25,
+        "commits": 5,
+        "lines": 27,
         "path": "tsconfig.json"
       }
     ]
   },
   "confidence": {
     "level": "low",
-    "reason": "fewer than 20 source files reach 10 revisions in the window"
+    "reason": "fewer than 25 source files reach 10 revisions in the window"
   },
-  "generatedAt": "2026-09-24T09:15:46.950Z",
+  "generatedAt": "2026-09-30T20:08:47.600Z",
   "generatedFrom": {
-    "commit": "1941e057a407375e432ef54dfac91d8d600469c0"
+    "commit": "41121c5a428d3dfd34ec01bfe7b83d278d546104"
   },
   "pairs": [
     {
@@ -616,7 +646,7 @@
     }
   ],
   "parameters": {
-    "appliedChangesetLimit": 22.5,
+    "appliedChangesetLimit": 24,
     "changeset": 50,
     "changesetFraction": 0.25,
     "cohesionDrop": 0.2,
@@ -625,16 +655,16 @@
     "floor": "fallen",
     "floorHeld": false,
     "floorTrigger": "revision-depth",
-    "headDate": "2026-09-17T18:38:08-07:00",
-    "inScopeFiles": 90,
+    "headDate": "2026-09-29T15:24:11-07:00",
+    "inScopeFiles": 96,
     "pinnedStart": null,
-    "priorFloor": null,
-    "qualifyingCommits": 47,
+    "priorFloor": "fallen",
+    "qualifyingCommits": 50,
     "qualifyingMinimum": 30,
     "revisions": 5,
     "shared": 10,
     "sharedFloorUsed": 3,
-    "since": "2026-03-22T01:38:08.000Z",
+    "since": "2026-04-02T22:24:11.000Z",
     "sourceExtensions": [
       ".js",
       ".mjs",
@@ -644,7 +674,9 @@
       ".tsx",
       ".mts",
       ".cts",
-      ".py"
+      ".py",
+      ".rs",
+      ".gd"
     ],
     "sourceFileReach": 20,
     "sourceFileRise": 25,
