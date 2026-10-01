@@ -18,64 +18,29 @@
   ],
   "changes": {
     "fileCounts": {
-      "added": 1,
-      "changed": 88,
+      "added": 0,
+      "changed": 2,
       "moved": 0,
-      "parts": 5,
+      "parts": 2,
       "removed": 0
     },
     "items": [
       {
         "kind": "door",
-        "sentence": "ci's pull request trigger now also names `codecov.yml`.",
+        "sentence": "ci's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `package-lock.json`, `package.json`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**` and `tsconfig.json`.",
         "subjects": [
           ".github/workflows/ci.yml"
         ]
-      },
-      {
-        "kind": "door",
-        "sentence": "ci's push trigger now also names `codecov.yml`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "ci now also runs src/tests/catalog.test.ts, src/tests/cli.test.ts, src/tests/docs-drift.test.ts and 13 more.",
-        "subjects": [
-          ".github/workflows/ci.yml",
-          "src/tests/catalog.test.ts",
-          "src/tests/cli.test.ts",
-          "src/tests/docs-drift.test.ts",
-          "src/tests/emit.test.ts",
-          "src/tests/footprint.test.ts",
-          "src/tests/gguf-safety.test.ts",
-          "src/tests/gguf.test.ts",
-          "src/tests/gqa.test.ts",
-          "src/tests/headroom.test.ts",
-          "src/tests/hf.test.ts",
-          "src/tests/placement.test.ts",
-          "src/tests/plan.test.ts",
-          "src/tests/probe.test.ts",
-          "src/tests/quant-risk.test.ts",
-          "src/tests/quant.test.ts",
-          "src/tests/roofline.test.ts"
-        ]
-      },
-      {
-        "kind": "door",
-        "sentence": "And 1 more change to a door.",
-        "subjects": []
       },
       {
         "kind": "counts",
-        "sentence": "1 file added and 88 changed content, across 5 parts.",
+        "sentence": "2 files changed content, across 2 parts.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "1941e057a407375e432ef54dfac91d8d600469c0",
-      "generatedAt": "2026-09-24T09:15:46.950Z"
+      "commit": "41121c5a428d3dfd34ec01bfe7b83d278d546104",
+      "generatedAt": "2026-09-30T20:08:47.600Z"
     },
     "unchanged": false
   },
@@ -161,7 +126,7 @@
     "Window: 180 days; a pair counts from 3 shared commits, since 2 source files reach 10 revisions; the floor rises to 10 when 25 do."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "41121c5a428d3dfd34ec01bfe7b83d278d546104",
+  "commit": "13fd265658be916012e5be5d292e3e698b0a9ed8",
   "defaultBranch": "main",
   "derived": "6 parts, mostly TypeScript (49 files), CSS (2), Astro (1), JavaScript (1) and PowerShell (1). Work enters through 5 doors; ci, Deploy site to GitHub Pages, Release, @mcptoolshop/bytefit and bytefit each reach 1 part, and ci is followed because a pull request goes through it. It publishes to npm. It deploys a site to GitHub Pages. People run bytefit. People import @mcptoolshop/bytefit.",
   "doors": [
@@ -209,7 +174,7 @@
       ],
       "stages": [],
       "triggers": [
-        "on a pull request touching 10 paths",
+        "on a pull request",
         "on a push touching 10 paths",
         "or by hand"
       ]
@@ -352,7 +317,7 @@
   "edges": [],
   "engine": "1.24.0",
   "generated": [],
-  "generatedAt": "2026-09-30T20:08:47.600Z",
+  "generatedAt": "2026-10-01T02:14:29.556Z",
   "limits": [
     "3 reads go to a path their caller passes, not to this repository.",
     "1 write and 1 read go to a temporary directory or a path their caller passes, not to this repository.",
