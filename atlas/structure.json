@@ -9,7 +9,7 @@
       "externals": 0,
       "files": [
         {
-          "hash": "ee24587a0049c7d6f0c6a70d58d478cc9d3f94829206ce06ca410bb1d2bb7460",
+          "hash": "fe6eafabb838223fcba19e84b40a992a8bd95efcd9be3829d21c644eca94bb30",
           "path": ".github/workflows/ci.yml"
         },
         {
@@ -170,7 +170,7 @@
           "path": "codecov.yml"
         },
         {
-          "hash": "5f0e0efbfa9b223f15cd205823bb8d6b6d55f4ea320dbaf4f734e66dbb94d0a4",
+          "hash": "11b24bdd4e51d23ebb33988eb2002b13703f72e27b8ccf3524ba00b059c11e4d",
           "path": "package-lock.json"
         },
         {
@@ -1391,19 +1391,7 @@
       ],
       "triggers": [
         {
-          "event": "pull_request",
-          "paths": [
-            ".github/workflows/**",
-            "atlas/**",
-            "codecov.yml",
-            "package-lock.json",
-            "package.json",
-            "site/astro.config.mjs",
-            "site/package-lock.json",
-            "site/package.json",
-            "src/**",
-            "tsconfig.json"
-          ]
+          "event": "pull_request"
         },
         {
           "event": "push",
@@ -1951,7 +1939,7 @@
   "edges": [],
   "engine": "1.24.0",
   "generatedFrom": {
-    "commit": "41121c5a428d3dfd34ec01bfe7b83d278d546104",
+    "commit": "13fd265658be916012e5be5d292e3e698b0a9ed8",
     "tracked": 91
   },
   "landings": [
