@@ -1,15 +1,14 @@
 # bytefit: how it works
 
-Mapped at 2026-10-01 from commit 13fd265 by Atlas 1.24.0.
+Mapped at 2026-11-11 from commit 478a32d by Atlas 1.26.0.
 
 ## What this is
 
 6 parts, mostly TypeScript (49 files), CSS (2), Astro (1), JavaScript (1) and PowerShell (1). Work enters through 5 doors; ci, Deploy site to GitHub Pages, Release, @mcptoolshop/bytefit and bytefit each reach 1 part, and ci is followed because a pull request goes through it. It publishes to npm. It deploys a site to GitHub Pages. People run bytefit. People import @mcptoolshop/bytefit.
 
-## What changed since 2026-09-30 (41121c5)
+## What changed since 2026-10-01 (13fd265)
 
-- ci's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `package-lock.json`, `package.json`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**` and `tsconfig.json`.
-- 2 files changed content, across 2 parts.
+Nothing structural changed since 2026-10-01; 2 files changed content.
 
 ## What comes in
 
