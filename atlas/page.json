@@ -26,23 +26,16 @@
     },
     "items": [
       {
-        "kind": "door",
-        "sentence": "ci's pull request trigger no longer names `.github/workflows/**`, `atlas/**`, `codecov.yml`, `package-lock.json`, `package.json`, `site/astro.config.mjs`, `site/package-lock.json`, `site/package.json`, `src/**` and `tsconfig.json`.",
-        "subjects": [
-          ".github/workflows/ci.yml"
-        ]
-      },
-      {
         "kind": "counts",
-        "sentence": "2 files changed content, across 2 parts.",
+        "sentence": "Nothing structural changed since 2026-10-01; 2 files changed content.",
         "subjects": []
       }
     ],
     "since": {
-      "commit": "41121c5a428d3dfd34ec01bfe7b83d278d546104",
-      "generatedAt": "2026-09-30T20:08:47.600Z"
+      "commit": "13fd265658be916012e5be5d292e3e698b0a9ed8",
+      "generatedAt": "2026-10-01T02:14:29.556Z"
     },
-    "unchanged": false
+    "unchanged": true
   },
   "changesTogether": [
     {
@@ -126,7 +119,7 @@
     "Window: 180 days; a pair counts from 3 shared commits, since 2 source files reach 10 revisions; the floor rises to 10 when 25 do."
   ],
   "changesTogetherWithTests": 0,
-  "commit": "13fd265658be916012e5be5d292e3e698b0a9ed8",
+  "commit": "478a32d9f986e2e972e17f8ea1ba1abb618bf4b1",
   "defaultBranch": "main",
   "derived": "6 parts, mostly TypeScript (49 files), CSS (2), Astro (1), JavaScript (1) and PowerShell (1). Work enters through 5 doors; ci, Deploy site to GitHub Pages, Release, @mcptoolshop/bytefit and bytefit each reach 1 part, and ci is followed because a pull request goes through it. It publishes to npm. It deploys a site to GitHub Pages. People run bytefit. People import @mcptoolshop/bytefit.",
   "doors": [
@@ -315,9 +308,9 @@
   "duplicatesLead": null,
   "duplicatesNote": [],
   "edges": [],
-  "engine": "1.24.0",
+  "engine": "1.26.0",
   "generated": [],
-  "generatedAt": "2026-10-01T02:14:29.556Z",
+  "generatedAt": "2026-11-11T22:11:14.969Z",
   "limits": [
     "3 reads go to a path their caller passes, not to this repository.",
     "1 write and 1 read go to a temporary directory or a path their caller passes, not to this repository.",
@@ -350,6 +343,7 @@
   "testedBy": {
     "src": 17
   },
+  "testedCodeParts": 1,
   "unnamedWrites": 0,
   "unread": [],
   "unreadFiles": 0,
